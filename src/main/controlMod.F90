@@ -243,7 +243,7 @@ contains
 
     namelist /clm_inparm/ use_bedrock
 
-    namelist /clm_inparam/ use_excess_ice !MVD
+    namelist /clm_inparm/ use_excess_ice !MVD
 
     namelist /clm_inparm/ use_biomass_heat_storage
 
