@@ -8,7 +8,7 @@ module clm_instMod
   use shr_kind_mod    , only : r8 => shr_kind_r8
   use decompMod       , only : bounds_type
   use clm_varpar      , only : ndecomp_pools, nlevdecomp_full
-  use clm_varctl      , only : use_cn, use_c13, use_c14, use_lch4, use_cndv, use_fates
+  use clm_varctl      , only : use_cn, use_c13, use_c14, use_lch4, use_cndv, use_fates, use_excess_ice
   use clm_varctl      , only : use_century_decomp, use_crop, snow_cover_fraction_method, paramfile
   use clm_varcon      , only : bdsno, c13ratio, c14ratio
   use landunit_varcon , only : istice, istsoil
@@ -88,6 +88,7 @@ module clm_instMod
   use LakeCon                         , only : LakeConInit 
   use SoilBiogeochemPrecisionControlMod, only: SoilBiogeochemPrecisionControlInit
   use SoilWaterMovementMod            , only : use_aquifer_layer
+  use ExcessIceStreamMod              , only : ExcessIceInit
   !
   implicit none
   private  ! By default everything is private
@@ -303,7 +304,10 @@ contains
          watsat_col = soilstate_inst%watsat_col(begc:endc, 1:), &
          t_soisno_col = temperature_inst%t_soisno_col(begc:endc, -nlevsno+1:), &
          use_aquifer_layer = use_aquifer_layer())
-
+   
+    if (use_excess_ice) then ! initialize excess ice if needed
+      call ExcessIceInit
+    endif
     call glacier_smb_inst%Init(bounds)
 
     ! COMPILER_BUG(wjs, 2014-11-29, pgi 14.7) Without the following assignment, the

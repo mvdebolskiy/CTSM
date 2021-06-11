@@ -46,7 +46,8 @@ module ExcessIceStreamMod
   private
   !
   ! !PUBLIC MEMBER FUNCTIONS:
-  public :: ExcessIceInit ! excess ice initialization and file
+  public :: ExcessIceInitStream ! excess ice initialization and file
+  public :: ExcessIceInit
 
   ! !PRIVATE MEMBER DATA:
   type(shr_strdata_type)  :: sdat_exice                    ! excess ice input data stream
@@ -62,25 +63,44 @@ contains
   
   !-----------------------------------------------------------------------
   !
-  ! soil_moisture_init
-  !
+  ! excess_ice_init_stream
+  ! initializes the data stream
   !-----------------------------------------------------------------------
-  subroutine ExcessIceInit(bounds,soilstate_inst, waterstatebulk_inst)
-
-    implicit none
-
+  subroutine ExcessIceInitStream(bounds)
     integer            :: rc                         ! error coe
     integer            :: i                          ! index
     integer            :: nu_nml                     ! unit for namelist file
     integer            :: nml_error                  ! namelist i/o error flag
     character(len=CL)  :: stream_fldfilename_exice   ! ustar stream filename to read
     character(len=CL)  :: stream_mapalgo = 'bilinear' !interpolation algorithm
+    character(*), parameter :: subName = "('ExcessIceInitStream')"
 
-    character(*), parameter :: subName = "('ExcessIceInit')"
+    if (masterproc) then
+        write(iulog,*) ' '
+        write(iulog,*) 'Excess ice stream initialization started'
+    endif
+    
+  end subroutine ExcessIceInitStream
 
+
+  subroutine ExcessIceInit(bounds,soilstate_inst, waterstatebulk_inst)
+    !
+    ! Assign data stream information for prescribed soil moisture.
+    !
+    ! !USES:
+    !
+    ! !ARGUMENTS:
+    implicit none
     type(bounds_type)         , intent(in)    :: bounds
     type(soilstate_type)      , intent(in)    :: soilstate_inst
     type(waterstatebulk_type) , intent(inout) :: waterstatebulk_inst
+    !
+    ! !LOCAL VARIABLES:
+    integer  :: rc
+    integer  :: c, g, j, ig, n
+
+
+    character(*), parameter :: subName = "('ExcessIceInit')"
 
     if (masterproc) then
         write(iulog,*) ' '
