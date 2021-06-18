@@ -55,9 +55,9 @@ module ExcessIceStreamMod
   integer, allocatable    :: g_to_ig(:)                    ! Array matching gridcell index to data index
   !PRIVATE TYPES:
   character(len=*), parameter, private :: sourcefile = &
-         __FILE__
+       __FILE__
   character(*), parameter :: u_FILE_u = &
-         __FILE__
+       __FILE__
 
 contains
   
