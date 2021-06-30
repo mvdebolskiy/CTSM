@@ -2229,6 +2229,11 @@ If TRUE, weight btran (vegetation soil moisture availability) by the active laye
 (EXPERIMENTAL and NOT tested)
 </entry>
 
+<entry id="use_excess_ice" type="logical" category="physics"
+        group="clm_inparm" valid_values="" >
+Toggle to turn on the excess ice physics, (Lee et al., 2014; Cai et al., 2020)
+</entry>
+
 <!-- stress deciduous onset trigger    -->
 <entry id="constrain_stress_deciduous_onset" type="logical" category="clm_physics"
        group="bgc_shared" valid_values="" >

@@ -242,6 +242,8 @@ contains
 
     namelist /clm_inparm/ use_bedrock
 
+    namelist /clm_inparm/ use_excess_ice !MVD
+
     namelist /clm_inparm/ use_biomass_heat_storage
 
     namelist /clm_inparm/ use_hydrstress
@@ -733,6 +735,8 @@ contains
 
     call mpi_bcast (use_bedrock, 1, MPI_LOGICAL, 0, mpicom, ier)
 
+    call mpi_bcast(use_excess_ice, 1, MPI_LOGICAL, 0, mpicom,ier) !MVD
+
     call mpi_bcast (use_biomass_heat_storage, 1, MPI_LOGICAL, 0, mpicom, ier)
 
     call mpi_bcast (use_hydrstress, 1, MPI_LOGICAL, 0, mpicom, ier)
@@ -864,6 +868,7 @@ contains
     write(iulog,*) '    use_vertsoilc = ', use_vertsoilc
     write(iulog,*) '    use_extralakelayers = ', use_extralakelayers
     write(iulog,*) '    use_vichydro = ', use_vichydro
+    write(iulog,*) '    use_excess_ice = ', use_excess_ice !MVD
     write(iulog,*) '    use_century_decomp = ', use_century_decomp
     write(iulog,*) '    use_cn = ', use_cn
     write(iulog,*) '    use_cndv = ', use_cndv
