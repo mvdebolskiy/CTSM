@@ -548,7 +548,6 @@ contains
       this%dynbal_baseline_ice_col(bounds%begc:bounds%endc) = 0._r8
 
       !Initialize excess ice
-      write(iulog,*) 'nfl =', NLFilename
       if (use_excess_ice .and. NLFilename /= '') then
         ! enforce initialization with 0 for everything
         this%init_exice(:,:)=0.0_r8
@@ -582,15 +581,17 @@ contains
             this%excess_ice_col(c,:) = 0.0_r8
             this%init_exice(c,:) = 0.0_r8
           end if
-       enddo
-       this%exice_melt_lev(:,:)=0.0_r8
-       this%exice_melt(:)=0.0_r8
-
-      else
-        this%init_exice(:,:)=0.0_r8
-        this%excess_ice_col(:,:)=0.0_r8
+        enddo
         this%exice_melt_lev(:,:)=0.0_r8
         this%exice_melt(:)=0.0_r8
+
+      else
+        do c = bounds%begc,bounds%endc
+         this%init_exice(c,:)=0.0_r8
+         this%excess_ice_col(c,:)=0.0_r8
+         this%exice_melt_lev(c,:)=0.0_r8
+         this%exice_melt(c)=0.0_r8
+        enddo
       end if
     end associate
 
