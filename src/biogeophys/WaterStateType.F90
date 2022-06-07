@@ -287,8 +287,8 @@ contains
 
       ! Add excess ice fields to history
       data2dptr => this%excess_ice_col(begc:endc,1:nlevsoi)
-      call hist_addfld2d (fname='EXCESS_ICE',  units='kg/m2', type2d='levsoi', &
-           avgflag='A', long_name='excess soil ice (vegetated landunits only)', &
+      call hist_addfld2d (fname=this%info%lname('EXCESS_ICE'),  units='kg/m2', type2d='levsoi', &
+           avgflag='A', long_name=this%info%lname('excess soil ice (vegetated landunits only)'), &
            ptr_col=this%excess_ice_col, l2g_scale_type='veg', & 
            default='inactive' )
 

@@ -306,6 +306,11 @@ contains
          long_name=this%info%lname('subsidence due to excess ice melt (veg landunits only)'), &
          ptr_col=this%exice_subs_tot_col)
 
+    this%exice_subs_col(begc:endc,1:nlevsoi)=0.0_r8
+    call hist_addfld2d (fname=this%info%fname('EXICE_SUBS_LEV'),  units='kg/m2', type2d='levsoi', &
+           avgflag='A',  long_name=this%info%lname('lev subsidence due to excess ice melt (veg landunits only)'), &
+           ptr_col=this%exice_subs_col, l2g_scale_type='veg', & 
+           default='inactive' )
     this%iwue_ln_patch(begp:endp) = spval
     call hist_addfld1d ( &
          fname=this%info%fname('IWUELN'), &
@@ -911,7 +916,7 @@ contains
       ! have to at least define them 
       call restartvar(ncid=ncid, flag=flag, varname=this%info%fname('EXICE_SUBS'),  &
            dim1name='column', xtype=ncd_double, &
-           long_name=this%info%lname('vertically summed volumetric excess ice concentration (veg landunits only)'), units='mm/s', &
+           long_name=this%info%lname('subsidence due to excess ice melt (veg landunits only)'), units='mm/s', &
            interpinic_flag='interp', readvar=readvar, data=this%exice_subs_tot_col)
       ! initialization of these to zero is ok, since they are not in history anyway
       this%exice_subs_col(bounds%begc:bounds%endc,1:nlevgrnd)=0.0_r8
@@ -926,6 +931,11 @@ contains
            dim1name='column', xtype=ncd_double, &
            long_name=this%info%lname('vertically averaged volumetric excess ice concentration (veg landunits only)'), units='m3/m3', &
            interpinic_flag='interp', readvar=readvar, data=this%exice_vol_tot_col)
+      call restartvar(ncid=ncid, flag=flag, varname=this%info%fname('EXICE_SUBS_LEV'), xtype=ncd_double,  &
+           dim1name='column', dim2name='levgrnd', switchdim=.true., &
+           long_name=this%info%lname('lev subsidence due to excess ice melt (veg landunits only)'), units='kg/m2', &
+           scale_by_thickness=.true., &
+           interpinic_flag='interp', readvar=readvar, data=this%exice_subs_col)
     endif
 
   end subroutine RestartBulk
@@ -1102,8 +1112,11 @@ contains
           h2osoi_liqice_10cm(c) = 0.0_r8
           h2osoi_liq_tot(c) = 0._r8
           h2osoi_ice_tot(c) = 0._r8
-          exice_subs_tot_col(c) = 0._r8
+          if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
+            exice_subs_tot_col(c) = 0._r8
+          endif
        end if
+       
     end do
     do j = 1, nlevsoi
        do fc = 1, num_nolakec
