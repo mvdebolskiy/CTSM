@@ -79,6 +79,7 @@ module SoilTemperatureMod
   private :: PhaseChangeH2osfc   ! When surface water freezes move ice to bottom snow layer
   private :: PhaseChange_beta    ! Calculation of the phase change within snow and soil layers
   private :: BuildingHAC         ! Building Heating and Cooling for simpler method (introduced in CLM4.5)
+  private :: LateralHeatFlux     ! Lateral heat flux between sub-grid permafrost tiles   
 
   real(r8), private, parameter :: thin_sfclayer = 1.0e-6_r8   ! Threshold for thin surface layer
   character(len=*), parameter, private :: sourcefile = &
@@ -114,13 +115,13 @@ contains
     ! !USES:
     use clm_time_manager         , only : get_step_size_real
     use clm_varpar               , only : nlevsno, nlevgrnd, nlevurb, nlevmaxurbgrnd
-    use clm_varctl               , only : iulog
+    use clm_varctl               , only : iulog, use_excess_ice_tiles
     use clm_varcon               , only : cnfac, cpice, cpliq, denh2o, denice
     use landunit_varcon          , only : istsoil, istcrop
     use column_varcon            , only : icol_roof, icol_sunwall, icol_shadewall, icol_road_perv, icol_road_imperv
     use BandDiagonalMod          , only : BandDiagonal
     use UrbanParamsType          , only : IsSimpleBuildTemp, IsProgBuildTemp
-    use UrbBuildTempOleson2015Mod, only : BuildingTemperature
+    use UrbBuildTempOleson2015Mod, only : BuildingTemperature    
     !
     ! !ARGUMENTS:
     type(bounds_type)              ,  intent(in)    :: bounds
@@ -500,6 +501,13 @@ contains
             end if
          end if
       end do
+
+      ! calculate lateral heat flux between excess ice tiles
+      if (use_excess_ice_tiles) then
+         call LateralHeatFlux(dtime, bounds, num_nolakec, filter_nolakec, cv, &
+         temperature_inst, waterdiagnosticbulk_inst, soilstate_inst, energyflux_inst)
+      endif
+
 
       ! compute phase change of h2osfc
 
@@ -2955,5 +2963,158 @@ end subroutine SetMatrix_Snow
   end subroutine BuildingHAC
 
   !-----------------------------------------------------------------------
+
+  subroutine LateralHeatFlux(dtime, bounds, num_nolakec, filter_nolakec, cv, &
+   temperature_inst, waterdiagnosticbulk_inst, soilstate_inst, energyflux_inst)
+
+   !Need: soiltemp, excess ice, vertical coordinates, geometry, heat capacity, thermal conductivity
+
+   ! DESCRIPTION:
+   !     Calculate lateral heat flux from subgrid permafrost tiles. 
+   !     Based on Smith et al. 2022/Aas et al., 2019.
+   
+   ! USES:
+   use clm_varpar      , only : nlevsno, nlevsoi, nlevmaxurbgrnd
+   use clm_varcon      , only : denice, tfrz 
+   use landunit_varcon , only : istsoil
+   use column_varcon   , only : icol_roof, icol_sunwall, icol_shadewall, icol_road_perv, icol_road_imperv
+   use clm_varctl      , only : iulog
+   use GridcellType    , only : grc
+   use LandunitType    , only : lun
+
+   implicit none
+   ! ARGUMENTS:
+   type(bounds_type)      , intent(in)    :: bounds 
+   integer                , intent(in)    :: num_nolakec                      ! number of column non-lake points in column filter
+   integer                , intent(in)    :: filter_nolakec(:)                ! column filter for non-lake points
+   real(r8)               , intent(in)    :: cv( bounds%begc: , -nlevsno+1: ) ! heat capacity [J/(m2 K) ] [col, lev]
+   real(r8)               , intent(in)    :: dtime                            !land model time step (sec)
+   type(temperature_type) , intent(inout)    :: temperature_inst
+   type(waterdiagnosticbulk_type)  , intent(in) :: waterdiagnosticbulk_inst
+   type(soilstate_type) , intent(in) :: soilstate_inst
+   type(energyflux_type) , intent(inout) ::  energyflux_inst
+   !
+   ! !LOCAL VARIABLES:
+   integer  :: l,c,j,g                   ! indices
+   integer  :: c1,c2                     ! indeces for tile columns
+   integer  :: j1,j2                     ! indeces for tile layers
+   integer  :: fc                        ! lake filtered column indices   
+   real(r8) :: dx,dl                     ! tile geometry parameters  [m]
+   real(r8) :: deltaz                    ! difference in heigt between tiles [m]
+   real(r8) :: A1, A2                    ! Areas of representative permafrost tiles [m]
+   real(r8) :: tl1ztop                   ! Depth to tile 1 layer top (relative to top of tile 1, + downwards) [m]      
+   real(r8) :: tl1zbot                   ! Depth to tile 1 layer bottom (relative to top of tile 1, + downwards) [m]
+   real(r8) :: tl2ztop                   ! Depth to tile 2 layer top (relative to top of tile 1, + downwards) [m]      
+   real(r8) :: tl2zbot                   ! Depth to tile 2 layer bottom (relative to top of tile 1, + downwards) [m]
+   real(r8) :: dzhhf                     ! Thickness of sub-layer used in lateral heat flux calculation
+   real(r8) :: dztile2                   ! Elevation difference between top of tile 2 compared to tile 1 
+   real(r8) :: initdztile2(bounds%begg:bounds%endg)              ! Initial elevation difference between top of tile 2 compared to tile 1 
+   real(r8) :: thk_int                   ! Thermal conductivity at tile interface
+   real(r8) :: hhf_interface             ! Layer interface horizotal heat flux, from tile2 to tile1 [W/m2]
+   real(r8) :: hhf1(1:nlevmaxurbgrnd)    ! Final horizotal heat flux into tile1 pr layer, scale [W/m2]
+   real(r8) :: hhf2(1:nlevmaxurbgrnd)    ! Final horizotal heat flux into tile2 pr layer, scale [W/m2]
+   !-----------------------------------------------------------------------
+
+   associate(                                             & 
+      dz           =>    col%dz			                 , & ! Input:  [real(r8) (:,:) ]  layer depth (m)                       
+      zi           =>    col%zi			                 , & ! Input:  [real(r8) (:,:) ]  interface level below a "z" level (m) 
+      z            =>    col%z			                 , & ! Input:  [real(r8) (:,:) ]  layer thickness (m)                   
+      exice_subs_tot_col   =>    waterdiagnosticbulk_inst%exice_subs_tot_col      , & ! Input: [real(r8) (:) ]  subsidence due to excess ice melt (m)   
+      t_soisno     =>    temperature_inst%t_soisno_col    , & ! Input:  [real(r8) (:,:) ]  soil temperature [K]                         
+      thk          =>    soilstate_inst%thk_col           , & ! Input: [real(r8) (:,:) ]  thermal conductivity of each layer  [W/m-K] 
+      eflx_lateral_col => energyflux_inst%eflx_lateral_col &  ! Output: [real(r8) (:) ]  lateral heat flux into column [W/m2]
+   )
+
+
+   dx = 2.0_r8   ! Will be read from file
+   dl = 10.0_r8  ! Will be read from file
+   initdztile2(bounds%begg:bounds%endg) = 0.5_r8 ! Will be read from file
+
+   dztile2 = 0.0_r8 !
+   hhf_interface = 0.0_r8
+   hhf1(1:nlevmaxurbgrnd) = 0.0_r8
+   hhf2(1:nlevmaxurbgrnd) = 0.0_r8
+
+   do g = bounds%begg,bounds%endg
+      l = grc%landunit_indices(istsoil,g)            
+      if (lun%ncolumns(l) == 2) then
+         c1=lun%coli(l)
+         c2=lun%colf(l)
+
+         !Update elevation of tile2 relative to tile1
+         dztile2 = initdztile2(g) + exice_subs_tot_col(c2) - exice_subs_tot_col(c1)                
+
+         j1=1
+         j2=1
+         tl1ztop = 0.0_r8
+         tl2ztop = 0.0_r8
+         tl1zbot = 0.0_r8
+         tl2zbot = 0.0_r8
+         
+         write(iulog,*) 'LateralHeatFlux'
+
+         do j = 2,nlevmaxurbgrnd*2 !could instead use while (j1<=nsoil .and. j2<=nsoil), j here is eaqual to j1+j2
+            
+            !Update tile top and bottom depth. Using top of tile1 as the reference. 
+            tl1ztop = zi(c1,j1) - dz(c1,j1) !zero for first layer
+            tl1zbot = zi(c1,j1) 
+            tl2ztop = zi(c2,j2) - dz(c2,j2) + dztile2 !top of tile2 relative to tile1
+            tl1zbot = zi(c2,j2) + dztile2    
+
+            dzhhf = min(tl1zbot,tl2zbot)-max(tl1ztop,tl2ztop) !calculate thickness of overlaping part of layer j1 and j2
+
+            if (dzhhf<0.0_r8) then !dzhhf will be negative if there is no interface, so flux should be zero. 
+               dzhhf = 0.0_r8
+            end if               
+            
+            thk_int = (thk(c1,j1)*thk(c2,j2))/(thk(c1,j1)+thk(c2,j2)) 
+            
+            !calculate horizontal heat flux through interface (from tile2 to tile1)
+            hhf_interface = - thk_int * (t_soisno(c2,j2) - t_soisno(c1,j1)) / dx 
+
+            !Scale flux to tile area and add to flux arrays
+            hhf1(j1) = hhf1(j1) + hhf_interface * dzhhf * dl / A1
+            hhf2(j2) = hhf2(j2) - hhf_interface * dzhhf * dl / A2 
+            
+            !For testing
+            write(iulog,"(F0.4)") ' j1= ', j1, ' j2= ', j2, 'tl1ztop...', tl1ztop,tl1zbot,tl2ztop,tl2zbot
+            write(iulog,"(F0.4)") ' dzhhf = ', dzhhf, ' hhf_interface= ', hhf_interface, 't_soisno(c1,j1)',t_soisno(c1,j1), &
+            't_soisno(c2,j2)= ',t_soisno(c2,j2)
+
+            !update index
+            if (tl1zbot < tl2zbot) then 
+               j1=j1+1
+               if (j1 > nlevmaxurbgrnd) then
+                  j1 = nlevmaxurbgrnd
+                  j2 = j2 + 1
+               endif
+            else 
+               j2=j2+1
+               if (j2 > nlevmaxurbgrnd) then
+                  j2 = nlevmaxurbgrnd
+                  j1 = j1 + 1
+               endif
+            endif
+         enddo !layer loop
+
+      endif
+   
+
+      eflx_lateral_col(c1) = 0.0_r8
+      eflx_lateral_col(c2) = 0.0_r8      
+   ! Update temperatures based on heat fluxes
+      do j = 1,nlevmaxurbgrnd
+         t_soisno(c1,j) = t_soisno(c1,j) + hhf1(j) * dtime / cv(c1,j)
+         t_soisno(c2,j) = t_soisno(c2,j) + hhf2(j) * dtime / cv(c2,j)
+         eflx_lateral_col(c1) = eflx_lateral_col(c1) + hhf1(j)
+         eflx_lateral_col(c2) = eflx_lateral_col(c2) + hhf2(j)
+      enddo
+   ! Output lateral heat flux (per layer or pr column)
+   enddo !grid cell loop
+
+   end associate 
+
+  end subroutine LateralHeatFlux
+
 
 end module SoilTemperatureMod
