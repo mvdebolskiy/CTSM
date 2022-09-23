@@ -272,7 +272,7 @@ contains
     allocate( this%errsol_col              (begc:endc))             ; this%errsol_col              (:)   = nan
     allocate( this%errlon_patch            (begp:endp))             ; this%errlon_patch            (:)   = nan
     allocate( this%errlon_col              (begc:endc))             ; this%errlon_col              (:)   = nan
-    allocate( this%eflx_lateral_col        (begc:endc))             ; this%eflx_lateral_col        (:)   = nan
+    allocate( this%eflx_lateral_col        (begc:endc))             ; this%eflx_lateral_col        (:)   = 0.0_r8
 
     this%eflx_dynbal_dribbler = annual_flux_dribbler_gridcell( &
          bounds = bounds, &

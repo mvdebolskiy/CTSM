@@ -3029,6 +3029,8 @@ end subroutine SetMatrix_Snow
    dx = 2.0_r8   ! Will be read from file
    dl = 10.0_r8  ! Will be read from file
    initdztile2(bounds%begg:bounds%endg) = 0.5_r8 ! Will be read from file
+   A1 = 10.0_r8  ! Will be read from file
+   A2 = 10.0_r8  ! Will be read from file
 
    dztile2 = 0.0_r8 !
    hhf_interface = 0.0_r8
@@ -3059,7 +3061,7 @@ end subroutine SetMatrix_Snow
             tl1ztop = zi(c1,j1) - dz(c1,j1) !zero for first layer
             tl1zbot = zi(c1,j1) 
             tl2ztop = zi(c2,j2) - dz(c2,j2) + dztile2 !top of tile2 relative to tile1
-            tl1zbot = zi(c2,j2) + dztile2    
+            tl2zbot = zi(c2,j2) + dztile2    
 
             dzhhf = min(tl1zbot,tl2zbot)-max(tl1ztop,tl2ztop) !calculate thickness of overlaping part of layer j1 and j2
 
@@ -3077,8 +3079,9 @@ end subroutine SetMatrix_Snow
             hhf2(j2) = hhf2(j2) - hhf_interface * dzhhf * dl / A2 
             
             !For testing
-            write(iulog,"(F0.4)") ' j1= ', j1, ' j2= ', j2, 'tl1ztop...', tl1ztop,tl1zbot,tl2ztop,tl2zbot
-            write(iulog,"(F0.4)") ' dzhhf = ', dzhhf, ' hhf_interface= ', hhf_interface, 't_soisno(c1,j1)',t_soisno(c1,j1), &
+            write(iulog,*) ' j1= ', j1, ' j2= ', j2
+            write(iulog,*) 'tl1ztop...', tl1ztop,tl1zbot,tl2ztop,tl2zbot
+            write(iulog,*) ' dzhhf = ', dzhhf, ' hhf_interface= ', hhf_interface, 't_soisno(c1,j1)',t_soisno(c1,j1), &
             't_soisno(c2,j2)= ',t_soisno(c2,j2)
 
             !update index
@@ -3111,6 +3114,11 @@ end subroutine SetMatrix_Snow
       enddo
    ! Output lateral heat flux (per layer or pr column)
    enddo !grid cell loop
+   
+   write(iulog,*) ' t_soisno(c1,:)= ', t_soisno(c1,:)
+   write(iulog,*) ' t_soisno(c2,:)= ', t_soisno(c2,:)
+   write(iulog,*) ' hhf1= ', hhf1
+   write(iulog,*) ' hhf2= ', hhf2
 
    end associate 
 
