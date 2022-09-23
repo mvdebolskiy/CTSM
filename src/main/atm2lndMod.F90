@@ -137,6 +137,8 @@ contains
     integer :: g, l, c, fc, c1, c2         ! indices
     integer :: clo, cc
     type(filter_col_type) :: downscale_filter_c
+    real(r8) :: initdztile2(bounds%begg:bounds%endg) ! Initial elevation difference between top of tile 2 compared to tile 1 
+    real(r8) :: dztile2                   ! Elevation difference between top of tile 2 compared to tile 1 
 
     ! temporaries for topo downscaling
     real(r8) :: hsurf_g,hsurf_c
@@ -181,9 +183,10 @@ contains
 
          ! Column-level state fields for snow redistribution
          snow_depth   => waterdiagnosticbulk_inst%snow_depth_col        , & ! Input: [real(r8) (:)   ] snow height (m)  
-         excess_ice   => waterstatebulk_inst%excess_ice_col               & ! Input:  [real(r8) (:,:) ]  excess ice (kg/m2) (new) (1:nlevgrnd)                        
+         exice_subs_tot_acc   =>    waterdiagnosticbulk_inst%exice_subs_tot_acc  & ! Input: [real(r8) (:) ]  subsidence due to excess ice melt (m)   
          )
-      
+      initdztile2(bounds%begg:bounds%endg) = 0.5_r8 ! Will be read from file
+
       ! Initialize column forcing (needs to be done for ALL active columns)
       do c = bounds%begc,bounds%endc
          if (col%active(c)) then
@@ -280,17 +283,16 @@ contains
             if (lun%ncolumns(l) == 2) then
                c1=lun%coli(l)
                c2=lun%colf(l)
-               if ((sum(excess_ice(c1,1:nlevgrnd))/ denice + snow_depth(c1)) &
-                  - (sum(excess_ice(c2,1:nlevgrnd))/ denice + snow_depth(c2)) &
+               dztile2 = (initdztile2(g) + exice_subs_tot_acc(c2) + snow_depth(c2)) - &
+                         (exice_subs_tot_acc(c1) + snow_depth(c1))! get the difference between the top of the snow on tiles
+               if (dztile2 >  SnowDepthTreshold) &
                   > SnowDepthTreshold) then
                   !Scale snow forcing. For now assumes equal sizes of the two tiles
                   forc_snow_c(c1) = 0.0_r8
                   forc_snow_c(c2) = forc_snow_c(c2) * 2.0_r8
                   !call endrun(subgrid_index=c, subgrid_level=subgrid_level_column, &
                   !msg=errMsg(sourcefile, __LINE__))
-               elseif ((sum(excess_ice(c2,1:nlevgrnd))/ denice + snow_depth(c2)) &
-                  - (sum(excess_ice(c1,1:nlevgrnd))/ denice + snow_depth(c1)) &
-                  > SnowDepthTreshold) then
+               elseif (dztile2 < - SnowDepthTreshold) then
                   forc_snow_c(c1) = forc_snow_c(c1) * 2.0_r8
                   forc_snow_c(c2) = 0.0_r8
                   !call endrun(subgrid_index=c, subgrid_level=subgrid_level_column, &
