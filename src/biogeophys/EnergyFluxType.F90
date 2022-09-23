@@ -72,6 +72,7 @@ module EnergyFluxType
      real(r8), pointer :: eflx_building_lun       (:)   ! lun building heat flux from change in interior building air temperature (W/m**2)
      real(r8), pointer :: eflx_urban_ac_lun       (:)   ! lun urban air conditioning flux (W/m**2)
      real(r8), pointer :: eflx_urban_heat_lun     (:)   ! lun urban heating flux (W/m**2)
+     real(r8), pointer :: eflx_lateral_col        (:)   ! lateral heat flux into column (excess ice tiles) [W/m2] 
 
      ! Derivatives of energy fluxes
      real(r8), pointer :: dgnetdT_patch           (:)   ! patch derivative of net ground heat flux wrt soil temp  (W/m**2 K)
@@ -271,6 +272,7 @@ contains
     allocate( this%errsol_col              (begc:endc))             ; this%errsol_col              (:)   = nan
     allocate( this%errlon_patch            (begp:endp))             ; this%errlon_patch            (:)   = nan
     allocate( this%errlon_col              (begc:endc))             ; this%errlon_col              (:)   = nan
+    allocate( this%eflx_lateral_col        (begc:endc))             ; this%eflx_lateral_col        (:)   = 0.0_r8
 
     this%eflx_dynbal_dribbler = annual_flux_dribbler_gridcell( &
          bounds = bounds, &

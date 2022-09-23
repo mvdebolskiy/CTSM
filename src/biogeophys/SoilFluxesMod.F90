@@ -157,7 +157,8 @@ contains
          eflx_lh_vegt            => energyflux_inst%eflx_lh_vegt_patch      , & ! Output: [real(r8) (:)   ]  veg transpiration heat flux (W/m**2) [+ to atm]
          eflx_lh_grnd            => energyflux_inst%eflx_lh_grnd_patch      , & ! Output: [real(r8) (:)   ]  ground evaporation heat flux (W/m**2) [+ to atm]
          errsoi_col              => energyflux_inst%errsoi_col              , & ! Output: [real(r8) (:)   ]  column-level soil/lake energy conservation error (W/m**2)
-         errsoi_patch            => energyflux_inst%errsoi_patch              & ! Output: [real(r8) (:)   ]  patch-level soil/lake energy conservation error (W/m**2)
+         errsoi_patch            => energyflux_inst%errsoi_patch            , & ! Output: [real(r8) (:)   ]  patch-level soil/lake energy conservation error (W/m**2)
+         eflx_lateral_col        => energyflux_inst%eflx_lateral_col          & ! Output: [real(r8) (:) ]  lateral heat flux into column [W/m2]
          )
 
       ! Get step size
@@ -392,6 +393,7 @@ contains
               - frac_h2osfc(c)*(t_h2osfc(c)-t_h2osfc_bef(c)) &
               *(c_h2osfc(c)/dtime)
          errsoi_patch(p) =  errsoi_patch(p)+eflx_h2osfc_to_snow_col(c) 
+         errsoi_patch(p) =  errsoi_patch(p)+eflx_lateral_col(c) 
          ! For urban sunwall, shadewall, and roof columns, the "soil" energy balance check
          ! must include the heat flux from the interior of the building.
          if (col%itype(c)==icol_sunwall .or. col%itype(c)==icol_shadewall .or. col%itype(c)==icol_roof) then
