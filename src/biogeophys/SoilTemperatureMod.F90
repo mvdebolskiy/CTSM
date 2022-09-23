@@ -3019,7 +3019,7 @@ end subroutine SetMatrix_Snow
       dz           =>    col%dz			                 , & ! Input:  [real(r8) (:,:) ]  layer depth (m)                       
       zi           =>    col%zi			                 , & ! Input:  [real(r8) (:,:) ]  interface level below a "z" level (m) 
       z            =>    col%z			                 , & ! Input:  [real(r8) (:,:) ]  layer thickness (m)                   
-      exice_subs_tot_col   =>    waterdiagnosticbulk_inst%exice_subs_tot_col      , & ! Input: [real(r8) (:) ]  subsidence due to excess ice melt (m)   
+      exice_subs_tot_acc   =>    waterdiagnosticbulk_inst%exice_subs_tot_acc      , & ! Input: [real(r8) (:) ]  subsidence due to excess ice melt (m)   
       t_soisno     =>    temperature_inst%t_soisno_col    , & ! Input:  [real(r8) (:,:) ]  soil temperature [K]                         
       thk          =>    soilstate_inst%thk_col           , & ! Input: [real(r8) (:,:) ]  thermal conductivity of each layer  [W/m-K] 
       eflx_lateral_col => energyflux_inst%eflx_lateral_col &  ! Output: [real(r8) (:) ]  lateral heat flux into column [W/m2]
@@ -3044,7 +3044,7 @@ end subroutine SetMatrix_Snow
          c2=lun%colf(l)
 
          !Update elevation of tile2 relative to tile1
-         dztile2 = initdztile2(g) + exice_subs_tot_col(c2) - exice_subs_tot_col(c1)                
+         dztile2 = initdztile2(g) + exice_subs_tot_acc(c2) - exice_subs_tot_acc(c1)                
 
          j1=1
          j2=1
