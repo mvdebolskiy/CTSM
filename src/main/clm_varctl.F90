@@ -144,6 +144,9 @@ module clm_varctl
   ! If prognostic crops are turned on
   logical, public :: use_crop = .false.
 
+  ! If grazing model is turned on
+  logical, public :: use_grazing = .false.
+
   ! Whether we're using the AgSys crop model
   ! TODO(wjs, 2022-03-30) Add namelist control of this variable (at which point we'll
   ! need to remove the 'parameter' attribute)

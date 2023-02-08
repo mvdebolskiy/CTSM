@@ -4104,6 +4104,18 @@ sub setup_logic_initinterp {
 
 #-------------------------------------------------------------------------------
 
+sub setup_logic_grazing {
+   #
+   # Options related to init_interp
+   #
+   my ($opts, $nl_flags, $definition, $defaults, $nl) = @_;
+
+  add_default($opts, $nl_flags->{'inputdata_rootdir'}, $definition, $defaults, $nl, 'use_grazing' );
+
+}
+
+#-------------------------------------------------------------------------------
+
 sub setup_logic_fates {
     #
     # Set some default options related to Ecosystem Demography

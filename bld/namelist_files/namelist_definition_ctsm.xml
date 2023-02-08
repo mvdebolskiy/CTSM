@@ -1013,6 +1013,11 @@ e.g., because we have integrated AgSys and have tests of it that make
 these software infrastructure tests obsolete.
 </entry>
 
+<entry id="use_grazing" type="logical" category="clm_physics"
+       group="clm_inparm" >
+Toggle to turn on grazing model
+</entry>
+
 <!-- ========================================================================================  -->
 <!-- Former CPP tokens -->
 <!-- ========================================================================================  -->

@@ -282,6 +282,7 @@ contains
          use_grainproduct, use_snicar_frc, use_vancouver, use_mexicocity, use_noio, &
          use_nguardrail
 
+    namelist /clm_inparm/ use_grazing
 
     ! ----------------------------------------------------------------------
     ! Default values
@@ -870,6 +871,7 @@ contains
     write(iulog,*) '    use_cn = ', use_cn
     write(iulog,*) '    use_cndv = ', use_cndv
     write(iulog,*) '    use_crop = ', use_crop
+    write(iulog,*) '    use_grazing = ', use_grazing
     write(iulog,*) '    use_fertilizer = ', use_fertilizer
     write(iulog,*) '    use_grainproduct = ', use_grainproduct
     write(iulog,*) '    o3_veg_stress_method = ', o3_veg_stress_method
