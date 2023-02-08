@@ -26,41 +26,35 @@ module CNGrazingMod
   !
   ! !PUBLIC MEMBER FUNCTIONS:
   public :: CNGrazing 
+  public :: TestGrazRoutines       ! soubroutine to test this module
   !
   !
   ! The following is only public for the sake of unit testing; it should not be called
   ! directly by CLM code outside this module
-  !public :: ComputeGroundHeatFluxAndDeriv       ! Computes G and dG/dT on surface of standing water, snow and soil
 
   !
   ! !PRIVATE MEMBER FUNCTIONS:
-  private :: TestGrazRoutines       ! soubroutine to test this module
+  
 
 
   real(r8), private, parameter :: test_param = 10.0_r8   ! 
   character(len=*), parameter, private :: sourcefile = &
        __FILE__
 
-  contains
-  
-  
-  
+contains
   
   subroutine CNGrazing(bounds)
 
-    filter_grazc = col_filter_from_ltypes( &
-                 bounds = bounds, &
-                 ltypes = [istsoil,istcrop], &
-                 include_inactive = .true.)
+  ! ARGUMENTS
 
-
+  type(bounds_type)              ,  intent(in)    :: bounds
 
   call t_startf( 'CNGrqazing' )
 
   call TestGrazRoutines()
 
 
-  call t_startf( 'CNGrqazing' )
+  call t_stopf( 'CNGrqazing' )
   end subroutine CNGrazing
   
   
@@ -70,7 +64,7 @@ module CNGrazingMod
   call t_startf( 'TestGrazRoutines' )
 
 
-  call t_startf( 'CNGrqazing' )
+  call t_stopf( 'TestGrazRoutines' )
   end subroutine TestGrazRoutines
 
 end module CNGrazingMod
