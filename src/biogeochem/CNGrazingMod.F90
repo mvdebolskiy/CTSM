@@ -18,6 +18,7 @@ module CNGrazingMod
   use LandunitType            , only : lun
   use ColumnType              , only : col
   use PatchType               , only : patch
+  use CNGrazerType            , only : grazer_type
   !
   ! !PUBLIC TYPES:
   implicit none
@@ -37,23 +38,46 @@ module CNGrazingMod
   
 
 
-  real(r8), private, parameter :: test_param = 10.0_r8   ! 
+  real(r8), private, parameter :: test_param = 10.0_r8   ! testing parameter
   character(len=*), parameter, private :: sourcefile = &
        __FILE__
 
 contains
   
-  subroutine CNGrazing(bounds)
+  subroutine CNGrazing(bounds, grazer_inst)
 
-  ! ARGUMENTS
+  ! USES:
+
+  ! ARGUMENTS:
 
   type(bounds_type)              ,  intent(in)    :: bounds
+  type(grazer_type)              ,  intent(inout) :: grazer_inst
+
+
+  ! LOCAL VARIABLES:
+  integer p
 
   call t_startf( 'CNGrqazing' )
 
+  associate( &
+            is_grazed               =>    grazer_inst%is_grazed                , & ! Input   [logical  (:)   ] patches that are grazed
+            totc_grazedp            =>    grazer_inst%grazed_totc_patch        , & ! In/out  [real(r8) (:)   ] patch grazed biomass gC/m2s
+            begc                    =>    bounds%begc                          , & ! Input   [integer        ] beginning column index
+            begp                    =>    bounds%begp                          , & ! Input   [integer        ] beginning patch index
+            endc                    =>    bounds%endc                          , & ! Input   [integer        ] ending column index
+            endp                    =>    bounds%endp                            & ! Input   [integer        ] ending patch index
+           )
+
+    do p = begp, endp
+      if (is_grazed(p)) then
+        totc_grazedp = 1.0_r8
+      write(iulog,*)
+      endif
+    enddo
+
   call TestGrazRoutines()
 
-
+  end associate
   call t_stopf( 'CNGrqazing' )
   end subroutine CNGrazing
   

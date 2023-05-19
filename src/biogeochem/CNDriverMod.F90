@@ -11,7 +11,7 @@ module CNDriverMod
   use decompMod                       , only : bounds_type
   use perf_mod                        , only : t_startf, t_stopf
   use clm_varctl                      , only : use_nitrif_denitrif, use_nguardrail
-  use clm_varctl                      , only : iulog, use_crop, use_crop_agsys
+  use clm_varctl                      , only : iulog, use_crop, use_crop_agsys, use_grazing
   use SoilBiogeochemDecompCascadeConType, only : mimics_decomp, century_decomp, decomp_method
   use CNSharedParamsMod               , only : use_fun
   use CNVegStateType                  , only : cnveg_state_type
@@ -44,6 +44,7 @@ module CNDriverMod
   use SoilWaterRetentionCurveMod      , only : soil_water_retention_curve_type
   use CLMFatesInterfaceMod            , only : hlm_fates_interface_type
   use CropReprPoolsMod                    , only : nrepr
+  use CNGrazerType                    , only : grazer_type
   !
   ! !PUBLIC TYPES:
   implicit none
@@ -104,7 +105,7 @@ contains
        wateratm2lndbulk_inst, canopystate_inst, soilstate_inst, temperature_inst,          &
        soil_water_retention_curve, crop_inst, ch4_inst,            &
        dgvs_inst, photosyns_inst, saturated_excess_runoff_inst, energyflux_inst,                   &
-       nutrient_competition_method, cnfire_method, dribble_crophrv_xsmrpool_2atm)
+       nutrient_competition_method, cnfire_method, dribble_crophrv_xsmrpool_2atm, grazer_inst)
     !
     ! !DESCRIPTION:
     ! The core CN code is executed here. Calculates fluxes for maintenance
@@ -147,6 +148,7 @@ contains
     use NutrientCompetitionMethodMod      , only: nutrient_competition_method_type
     use CNRootDynMod                      , only: CNRootDyn
     use CNPrecisionControlMod             , only: CNPrecisionControl
+    use CNGrazingMod                      , only: CNGrazing
     !
     ! !ARGUMENTS:
     type(bounds_type)                       , intent(in)    :: bounds  
@@ -208,6 +210,7 @@ contains
     class(fire_method_type)                 , intent(inout) :: cnfire_method
     logical                                 , intent(in)    :: dribble_crophrv_xsmrpool_2atm
     type(hlm_fates_interface_type)          , intent(inout) :: clm_fates
+    type(grazer_type)                       , intent(inout) :: grazer_inst
     !
     ! !LOCAL VARIABLES:
     real(r8):: cn_decomp_pools(bounds%begc:bounds%endc,1:nlevdecomp,1:ndecomp_pools)
@@ -673,6 +676,18 @@ contains
          soilbiogeochem_nitrogenstate_inst, soilbiogeochem_nitrogenflux_inst)
 
     call t_stopf('SoilBiogeochemLittVertTransp')
+
+
+    !--------------------------------------------
+    ! Calculate grazing carbon and nitrogen fluxes
+    !-------------------------------------------
+    if (use_grazing) then
+      call t_startf('CNGrazing')
+
+      call CNGrazing(bounds, grazer_inst)
+
+      call t_stopf('CNGrazing')
+    endif
 
     !--------------------------------------------
     ! Calculate the gap mortality carbon and nitrogen fluxes

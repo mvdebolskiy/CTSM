@@ -96,6 +96,7 @@ module CNVegetationFacade
   use SoilBiogeochemPrecisionControlMod , only: SoilBiogeochemPrecisionControl
   use SoilWaterRetentionCurveMod      , only : soil_water_retention_curve_type
   use CLMFatesInterfaceMod            , only : hlm_fates_interface_type
+  use CNGrazerType                    , only : grazer_type
   !
   implicit none
   private
@@ -897,7 +898,7 @@ contains
        wateratm2lndbulk_inst, canopystate_inst, soilstate_inst, temperature_inst, &
        soil_water_retention_curve, crop_inst, ch4_inst, &
        photosyns_inst, saturated_excess_runoff_inst, energyflux_inst,          &
-       nutrient_competition_method, fireemis_inst)
+       nutrient_competition_method, fireemis_inst, grazer_inst)
     !
     ! !DESCRIPTION:
     ! Do the main science for CN vegetation that needs to be done before hydrology-drainage
@@ -953,6 +954,7 @@ contains
     class(nutrient_competition_method_type) , intent(inout) :: nutrient_competition_method
     type(fireemis_type)                     , intent(inout) :: fireemis_inst
     type(hlm_fates_interface_type)          , intent(inout) :: clm_fates
+    type(grazer_type)                       , intent(inout) :: grazer_inst
     !
     ! !LOCAL VARIABLES:
 
@@ -987,7 +989,7 @@ contains
          wateratm2lndbulk_inst, canopystate_inst, soilstate_inst, temperature_inst, &
          soil_water_retention_curve, crop_inst, ch4_inst, &
          this%dgvs_inst, photosyns_inst, saturated_excess_runoff_inst, energyflux_inst,          &
-         nutrient_competition_method, this%cnfire_method, this%dribble_crophrv_xsmrpool_2atm)
+         nutrient_competition_method, this%cnfire_method, this%dribble_crophrv_xsmrpool_2atm, grazer_inst)
 
     ! fire carbon emissions 
     call CNFireEmisUpdate(bounds, num_soilp, filter_soilp, &

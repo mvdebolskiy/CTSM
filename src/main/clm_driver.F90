@@ -1019,7 +1019,7 @@ contains
                water_inst%wateratm2lndbulk_inst, canopystate_inst, soilstate_inst, temperature_inst, &
                soil_water_retention_curve, crop_inst, ch4_inst, &
                photosyns_inst, saturated_excess_runoff_inst, energyflux_inst,          &
-               nutrient_competition_method, fireemis_inst)
+               nutrient_competition_method, fireemis_inst, grazer_inst)
 
           call t_stopf('ecosysdyn')
 

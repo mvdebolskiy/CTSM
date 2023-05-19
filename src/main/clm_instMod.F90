@@ -83,6 +83,7 @@ module clm_instMod
   use SnowCoverFractionFactoryMod     , only : CreateAndInitSnowCoverFraction
   use SoilWaterRetentionCurveMod      , only : soil_water_retention_curve_type
   use NutrientCompetitionMethodMod    , only : nutrient_competition_method_type
+  use CNGrazerType                    , only : grazer_type
   !
   use SoilStateInitTimeConstMod       , only : SoilStateInitTimeConst
   use SoilHydrologyInitTimeConstMod   , only : SoilHydrologyInitTimeConst
@@ -155,6 +156,7 @@ module clm_instMod
   type(vocemis_type)  , public            :: vocemis_inst
   type(fireemis_type) , public            :: fireemis_inst
   type(drydepvel_type), public            :: drydepvel_inst
+  type(grazer_type),    public            :: grazer_inst
 
   ! FATES
   type(hlm_fates_interface_type), public  :: clm_fates
@@ -432,6 +434,8 @@ contains
        call crop_inst%Init(bounds)
     end if
 
+    ! Initialize grazing and grazers
+      call grazer_inst%Init(bounds)
     
     ! Initialize the Functionaly Assembled Terrestrial Ecosystem Simulator (FATES)
     ! 
