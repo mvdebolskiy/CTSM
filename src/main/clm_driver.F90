@@ -1019,7 +1019,7 @@ contains
                water_inst%wateratm2lndbulk_inst, canopystate_inst, soilstate_inst, temperature_inst, &
                soil_water_retention_curve, crop_inst, ch4_inst, &
                photosyns_inst, saturated_excess_runoff_inst, energyflux_inst,          &
-               nutrient_competition_method, fireemis_inst, grazer_inst, surfalb_inst)
+               nutrient_competition_method, fireemis_inst, surfalb_inst)
 
           call t_stopf('ecosysdyn')
 
@@ -1181,7 +1181,7 @@ contains
           call bgc_vegetation_inst%BalanceCheck( &
                bounds_clump, filter(nc)%num_soilc, filter(nc)%soilc, &
                soilbiogeochem_carbonflux_inst, &
-               soilbiogeochem_nitrogenflux_inst, atm2lnd_inst, grazer_inst)
+               soilbiogeochem_nitrogenflux_inst, atm2lnd_inst)
           call t_stopf('cnbalchk')
        end if
 
