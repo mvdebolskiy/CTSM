@@ -72,6 +72,29 @@ module CNVegNitrogenFluxType
      real(r8), pointer :: harvest_n_to_litr_n_col                   (:,:,:) ! col N fluxes associated with harvest to litter pools (gN/m3/s)
      real(r8), pointer :: harvest_n_to_cwdn_col                     (:,:)   ! col N fluxes associated with harvest to CWD pool (gN/m3/s)
 
+     ! grazing fluxes
+     real(r8), pointer :: grz_leafn_to_litter_patch                 (:)     ! patch leaf N grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_frootn_to_litter_patch                (:)     ! patch fine root N grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_leafn_storage_to_litter_patch         (:)     ! patch leaf N storage grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_frootn_storage_to_litter_patch        (:)     ! patch fine root N storage grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_livestemn_storage_to_litter_patch     (:)     ! patch live stem N storage grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_deadstemn_storage_to_litter_patch     (:)     ! patch dead stem N storage grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_livecrootn_storage_to_litter_patch    (:)     ! patch live coarse root N storage grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_deadcrootn_storage_to_litter_patch    (:)     ! patch dead coarse root N storage grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_leafn_xfer_to_litter_patch            (:)     ! patch leaf N transfer grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_frootn_xfer_to_litter_patch           (:)     ! patch fine root N transfer grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_livestemn_xfer_to_litter_patch        (:)     ! patch live stem N transfer grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_deadstemn_xfer_to_litter_patch        (:)     ! patch dead stem N transfer grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_livecrootn_xfer_to_litter_patch       (:)     ! patch live coarse root N transfer grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_deadcrootn_xfer_to_litter_patch       (:)     ! patch dead coarse root N transfer grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_livestemn_to_litter_patch             (:)     ! patch live stem N grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_deadstemn_to_litter_patch             (:)     ! patch dead stem N grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_livecrootn_to_litter_patch            (:)     ! patch live coarse root N grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_deadcrootn_to_litter_patch            (:)     ! patch dead coarse root N grazing mortality (gN/m2/s)
+     real(r8), pointer :: grz_retransn_to_litter_patch              (:)     ! patch retranslocated N pool grazing mortality (gN/m2/s)
+     real(r8), pointer :: grazing_n_to_litr_n_col                   (:,:,:) ! col N fluxes associated with grazing to litter pools (gN/m3/s)
+     real(r8), pointer :: grazing_n_to_cwdn_col                     (:,:)   ! col N fluxes associated with grazing to CWD pool (gN/m3/s)
+
      ! fire N fluxes 
      real(r8), pointer :: m_decomp_npools_to_fire_vr_col            (:,:,:) ! col vertically-resolved decomposing N fire loss (gN/m3/s)
      real(r8), pointer :: m_decomp_npools_to_fire_col               (:,:)   ! col vertically-integrated (diagnostic) decomposing N fire loss (gN/m2/s)
@@ -380,6 +403,26 @@ contains
     allocate(this%hrv_deadcrootn_to_litter_patch            (begp:endp)) ; this%hrv_deadcrootn_to_litter_patch            (:) = nan
     allocate(this%hrv_retransn_to_litter_patch              (begp:endp)) ; this%hrv_retransn_to_litter_patch              (:) = nan
 
+    allocate(this%grz_leafn_to_litter_patch                 (begp:endp)) ; this%grz_leafn_to_litter_patch                 (:) = nan
+    allocate(this%grz_frootn_to_litter_patch                (begp:endp)) ; this%grz_frootn_to_litter_patch                (:) = nan
+    allocate(this%grz_leafn_storage_to_litter_patch         (begp:endp)) ; this%grz_leafn_storage_to_litter_patch         (:) = nan
+    allocate(this%grz_frootn_storage_to_litter_patch        (begp:endp)) ; this%grz_frootn_storage_to_litter_patch        (:) = nan
+    allocate(this%grz_livestemn_storage_to_litter_patch     (begp:endp)) ; this%grz_livestemn_storage_to_litter_patch     (:) = nan
+    allocate(this%grz_deadstemn_storage_to_litter_patch     (begp:endp)) ; this%grz_deadstemn_storage_to_litter_patch     (:) = nan
+    allocate(this%grz_livecrootn_storage_to_litter_patch    (begp:endp)) ; this%grz_livecrootn_storage_to_litter_patch    (:) = nan
+    allocate(this%grz_deadcrootn_storage_to_litter_patch    (begp:endp)) ; this%grz_deadcrootn_storage_to_litter_patch    (:) = nan
+    allocate(this%grz_leafn_xfer_to_litter_patch            (begp:endp)) ; this%grz_leafn_xfer_to_litter_patch            (:) = nan
+    allocate(this%grz_frootn_xfer_to_litter_patch           (begp:endp)) ; this%grz_frootn_xfer_to_litter_patch           (:) = nan
+    allocate(this%grz_livestemn_xfer_to_litter_patch        (begp:endp)) ; this%grz_livestemn_xfer_to_litter_patch        (:) = nan
+    allocate(this%grz_deadstemn_xfer_to_litter_patch        (begp:endp)) ; this%grz_deadstemn_xfer_to_litter_patch        (:) = nan
+    allocate(this%grz_livecrootn_xfer_to_litter_patch       (begp:endp)) ; this%grz_livecrootn_xfer_to_litter_patch       (:) = nan
+    allocate(this%grz_deadcrootn_xfer_to_litter_patch       (begp:endp)) ; this%grz_deadcrootn_xfer_to_litter_patch       (:) = nan
+    allocate(this%grz_livestemn_to_litter_patch             (begp:endp)) ; this%grz_livestemn_to_litter_patch             (:) = nan
+    allocate(this%grz_deadstemn_to_litter_patch             (begp:endp)) ; this%grz_deadstemn_to_litter_patch             (:) = nan
+    allocate(this%grz_livecrootn_to_litter_patch            (begp:endp)) ; this%grz_livecrootn_to_litter_patch            (:) = nan
+    allocate(this%grz_deadcrootn_to_litter_patch            (begp:endp)) ; this%grz_deadcrootn_to_litter_patch            (:) = nan
+    allocate(this%grz_retransn_to_litter_patch              (begp:endp)) ; this%grz_retransn_to_litter_patch              (:) = nan
+
     allocate(this%m_leafn_to_fire_patch                     (begp:endp)) ; this%m_leafn_to_fire_patch                     (:) = nan
     allocate(this%m_leafn_storage_to_fire_patch             (begp:endp)) ; this%m_leafn_storage_to_fire_patch             (:) = nan
     allocate(this%m_leafn_xfer_to_fire_patch                (begp:endp)) ; this%m_leafn_xfer_to_fire_patch                (:) = nan
@@ -544,6 +587,8 @@ contains
     allocate(this%fire_mortality_n_to_cwdn_col      (begc:endc, 1:nlevdecomp_full))
     allocate(this%harvest_n_to_litr_n_col           (begc:endc, 1:nlevdecomp_full, 1:ndecomp_pools))
     allocate(this%harvest_n_to_cwdn_col             (begc:endc, 1:nlevdecomp_full))
+    allocate(this%grazing_n_to_litr_n_col           (begc:endc, 1:nlevdecomp_full, 1:ndecomp_pools))
+    allocate(this%grazing_n_to_cwdn_col             (begc:endc, 1:nlevdecomp_full))
 
     this%phenology_n_to_litr_n_col       (:,:,:) = nan
     this%gap_mortality_n_to_litr_n_col   (:,:,:) = nan
@@ -551,6 +596,8 @@ contains
     this%fire_mortality_n_to_cwdn_col      (:,:) = nan
     this%harvest_n_to_litr_n_col         (:,:,:) = nan
     this%harvest_n_to_cwdn_col             (:,:) = nan
+    this%grazing_n_to_litr_n_col         (:,:,:) = nan
+    this%grazing_n_to_cwdn_col             (:,:) = nan
 
     allocate(this%plant_ndemand_patch         (begp:endp)) ;    this%plant_ndemand_patch         (:) = nan
     allocate(this%avail_retransn_patch        (begp:endp)) ;    this%avail_retransn_patch        (:) = nan
@@ -1711,6 +1758,25 @@ contains
        this%hrv_livecrootn_to_litter_patch(i)            = value_patch        
        this%hrv_deadcrootn_to_litter_patch(i)            = value_patch        
        this%hrv_retransn_to_litter_patch(i)              = value_patch    
+       this%grz_leafn_to_litter_patch(i)                 = value_patch             
+       this%grz_frootn_to_litter_patch(i)                = value_patch            
+       this%grz_leafn_storage_to_litter_patch(i)         = value_patch     
+       this%grz_frootn_storage_to_litter_patch(i)        = value_patch    
+       this%grz_livestemn_storage_to_litter_patch(i)     = value_patch 
+       this%grz_deadstemn_storage_to_litter_patch(i)     = value_patch 
+       this%grz_livecrootn_storage_to_litter_patch(i)    = value_patch
+       this%grz_deadcrootn_storage_to_litter_patch(i)    = value_patch
+       this%grz_leafn_xfer_to_litter_patch(i)            = value_patch        
+       this%grz_frootn_xfer_to_litter_patch(i)           = value_patch       
+       this%grz_livestemn_xfer_to_litter_patch(i)        = value_patch    
+       this%grz_deadstemn_xfer_to_litter_patch(i)        = value_patch    
+       this%grz_livecrootn_xfer_to_litter_patch(i)       = value_patch   
+       this%grz_deadcrootn_xfer_to_litter_patch(i)       = value_patch   
+       this%grz_livestemn_to_litter_patch(i)             = value_patch         
+       this%grz_deadstemn_to_litter_patch(i)             = value_patch
+       this%grz_livecrootn_to_litter_patch(i)            = value_patch        
+       this%grz_deadcrootn_to_litter_patch(i)            = value_patch        
+       this%grz_retransn_to_litter_patch(i)              = value_patch    
 
        this%gru_leafn_to_litter_patch(i)                 = value_patch             
        this%gru_leafn_storage_to_atm_patch(i)            = value_patch     
@@ -1865,6 +1931,7 @@ contains
              this%gap_mortality_n_to_litr_n_col(i,j,k)   = value_column
              this%harvest_n_to_litr_n_col(i,j,k)         = value_column
              this%m_n_to_litr_fire_col(i,j,k)            = value_column
+             this%grazing_n_to_litr_n_col(i,j,k)         = value_column
              ! gross unrepresented landcover change
              this%gru_n_to_litr_n_col(i,j,k)             = value_column
           end do
@@ -1872,6 +1939,7 @@ contains
           this%gap_mortality_n_to_cwdn_col(i,j)          = value_column
           this%fire_mortality_n_to_cwdn_col(i,j)         = value_column
           this%harvest_n_to_cwdn_col(i,j)                = value_column  
+          this%grazing_n_to_cwdn_col(i,j)                = value_column  
 
           ! gross unrepresented landcover change
           this%gru_n_to_cwdn_col(i,j)                    = value_column  

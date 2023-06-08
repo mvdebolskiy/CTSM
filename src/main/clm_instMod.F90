@@ -434,8 +434,6 @@ contains
        call crop_inst%Init(bounds)
     end if
 
-    ! Initialize grazing and grazers
-      call grazer_inst%Init(bounds)
     
     ! Initialize the Functionaly Assembled Terrestrial Ecosystem Simulator (FATES)
     ! 

@@ -10,7 +10,7 @@ module CNBalanceCheckMod
   use shr_log_mod                     , only : errMsg => shr_log_errMsg
   use decompMod                       , only : bounds_type, subgrid_level_gridcell, subgrid_level_column
   use abortutils                      , only : endrun
-  use clm_varctl                      , only : iulog, use_nitrif_denitrif
+  use clm_varctl                      , only : iulog, use_nitrif_denitrif, use_grazing
   use clm_time_manager                , only : get_step_size_real
   use CNVegNitrogenFluxType           , only : cnveg_nitrogenflux_type
   use CNVegNitrogenStateType          , only : cnveg_nitrogenstate_type
@@ -22,6 +22,7 @@ module CNBalanceCheckMod
   use ColumnType                      , only : col                
   use GridcellType                    , only : grc
   use CNSharedParamsMod               , only : use_fun
+  use CNGrazerType                    , only : grazer_type
 
   !
   implicit none
@@ -204,7 +205,7 @@ contains
   !-----------------------------------------------------------------------
   subroutine CBalanceCheck(this, bounds, num_soilc, filter_soilc, &
        soilbiogeochem_carbonflux_inst, cnveg_carbonflux_inst, &
-       cnveg_carbonstate_inst, c_products_inst)
+       cnveg_carbonstate_inst, c_products_inst, grazer_inst)
     !
     ! !USES:
     use subgridAveMod, only: c2g
@@ -221,6 +222,7 @@ contains
     type(cnveg_carbonflux_type)          , intent(in)    :: cnveg_carbonflux_inst
     type(cnveg_carbonstate_type)         , intent(inout) :: cnveg_carbonstate_inst
     type(cn_products_type)               , intent(in)    :: c_products_inst
+    type(grazer_type)                    , intent(in)    :: grazer_inst
     !
     ! !LOCAL VARIABLES:
     integer :: c, g, err_index  ! indices
@@ -235,6 +237,7 @@ contains
     real(r8) :: hrv_xsmrpool_amount_left_to_dribble(bounds%begg:bounds%endg)
     real(r8) :: gru_conv_cflux_amount_left_to_dribble(bounds%begg:bounds%endg)
     real(r8) :: dwt_conv_cflux_amount_left_to_dribble(bounds%begg:bounds%endg)
+    real(r8) :: grazed_closs_grc(bounds%begg:bounds%endg)
     !-----------------------------------------------------------------------
 
     associate(                                                                            & 
@@ -252,6 +255,7 @@ contains
          gru_conv_cflux          =>    cnveg_carbonflux_inst%gru_conv_cflux_col         , & ! Input:  [real(r8) (:) ]  (gC/m2/s) wood harvest (to product pools)
          gru_wood_productc_gain  =>    cnveg_carbonflux_inst%gru_wood_productc_gain_col , & ! Input:  [real(r8) (:) ]  (gC/m2/s) wood harvest (to product pools)
          crop_harvestc_to_cropprodc     =>    cnveg_carbonflux_inst%crop_harvestc_to_cropprodc_col    , & ! Input:  [real(r8) (:) ]  (gC/m2/s) crop harvest C to 1-year crop product pool
+         grazed_closs            =>    grazer_inst%grazed_closs_col                     , & ! Input:  [real(r8) (:) ]  (gC/m2/s) carbon loss to grazing
          gpp                     =>    cnveg_carbonflux_inst%gpp_col                    , & ! Input:  [real(r8) (:) ]  (gC/m2/s) gross primary production
          er                      =>    cnveg_carbonflux_inst%er_col                     , & ! Input:  [real(r8) (:) ]  (gC/m2/s) total ecosystem respiration, autotrophic + heterotrophic
          col_fire_closs          =>    cnveg_carbonflux_inst%fire_closs_col             , & ! Input:  [real(r8) (:) ]  (gC/m2/s) total column-level fire C loss
@@ -280,6 +284,9 @@ contains
          col_coutputs = er(c) + col_fire_closs(c) + col_hrv_xsmrpool_to_atm(c) + &
               col_xsmrpool_to_atm(c) + gru_conv_cflux(c)
 
+         ! Add grazing losses what has been grazed is substracted from totcolc
+         ! what has to go to litter is added to the totcolc
+         col_coutputs = col_coutputs + grazed_closs(c)
          ! Fluxes to product pools are included in column-level outputs: the product
          ! pools are not included in totcolc, so are outside the system with respect to
          ! these balance checks. (However, the dwt flux to product pools is NOT included,
@@ -339,6 +346,11 @@ contains
          garr = som_c_leached_grc(bounds%begg:bounds%endg), &
          c2l_scale_type = 'unity', &
          l2g_scale_type = 'unity')
+      call c2g( bounds = bounds, &
+         carr = grazed_closs(bounds%begc:bounds%endc), &
+         garr = grazed_closs_grc(bounds%begg:bounds%endg), &
+         c2l_scale_type = 'unity', &
+         l2g_scale_type = 'unity')
 
       err_found = .false.
       do g = bounds%begg, bounds%endg
@@ -361,7 +373,7 @@ contains
          grc_endcb(g) = totgrcc(g) + tot_woodprod_grc(g) + cropprod1_grc(g) + &
                         hrv_xsmrpool_amount_left_to_dribble(g) + &
                         gru_conv_cflux_amount_left_to_dribble(g) + &
-                        dwt_conv_cflux_amount_left_to_dribble(g)
+                        dwt_conv_cflux_amount_left_to_dribble(g) + grazed_closs_grc(g) *dt
 
          ! calculate total gridcell-level inputs
          ! slevis notes:
@@ -410,7 +422,7 @@ contains
   !-----------------------------------------------------------------------
   subroutine NBalanceCheck(this, bounds, num_soilc, filter_soilc, &
        soilbiogeochem_nitrogenflux_inst, cnveg_nitrogenflux_inst, &
-       cnveg_nitrogenstate_inst, n_products_inst, atm2lnd_inst)
+       cnveg_nitrogenstate_inst, n_products_inst, atm2lnd_inst, grazer_inst)
     !
     ! !DESCRIPTION:
     ! Perform nitrogen mass conservation check
@@ -430,6 +442,7 @@ contains
     type(cnveg_nitrogenstate_type)          , intent(inout) :: cnveg_nitrogenstate_inst
     type(cn_products_type)                  , intent(in)    :: n_products_inst
     type(atm2lnd_type)                      , intent(in)    :: atm2lnd_inst
+    type(grazer_type)                       , intent(in)    :: grazer_inst
     !
     ! !LOCAL VARIABLES:
     integer :: c,err_index,j  ! indices
@@ -447,6 +460,7 @@ contains
     real(r8):: grc_ninputs(bounds%begg:bounds%endg)
     real(r8):: grc_noutputs(bounds%begg:bounds%endg)
     real(r8):: grc_errnb(bounds%begg:bounds%endg)
+    real(r8):: grc_grazed_nloss(bounds%begg:bounds%endg)
     !-----------------------------------------------------------------------
 
     associate(                                                                             & 
@@ -476,6 +490,7 @@ contains
 
          col_fire_nloss      => cnveg_nitrogenflux_inst%fire_nloss_col                   , & ! Input:  [real(r8) (:) ]  (gN/m2/s) total column-level fire N loss 
          wood_harvestn       => cnveg_nitrogenflux_inst%wood_harvestn_col                , & ! Input:  [real(r8) (:) ]  (gN/m2/s) wood harvest (to product pools)
+         grazed_nloss        => grazer_inst%grazed_nloss_col                             , & ! Input:  [real(r8) (:) ]  (gC/m2/s) nitrogen loss to grazing
          gru_conv_nflux_grc  => cnveg_nitrogenflux_inst%gru_conv_nflux_grc               , & ! Input:  [real(r8) (:) ]  (gC/m2/s) wood harvest (to product pools) summed to the gridcell level
          gru_conv_nflux      => cnveg_nitrogenflux_inst%gru_conv_nflux_col               , & ! Input:  [real(r8) (:) ]  (gC/m2/s) wood harvest (to product pools)
          gru_wood_productn_gain => cnveg_nitrogenflux_inst%gru_wood_productn_gain_col    , & ! Input:  [real(r8) (:) ]  (gC/m2/s) wood harvest (to product pools)
@@ -524,6 +539,7 @@ contains
               wood_harvestn(c) + &
               gru_wood_productn_gain(c) + &
               crop_harvestn_to_cropprodn(c)
+         col_noutputs(c) = col_noutputs(c) + grazed_nloss(c)
 
          if (.not. use_nitrif_denitrif) then
             col_noutputs(c) = col_noutputs(c) + sminn_leached(c)
@@ -587,6 +603,11 @@ contains
          garr = grc_noutputs_partial(bounds%begg:bounds%endg), &
          c2l_scale_type = 'unity', &
          l2g_scale_type = 'unity')
+       call c2g( bounds = bounds, &
+         carr = grazed_nloss(bounds%begc:bounds%endc), &
+         garr = grc_grazed_nloss(bounds%begg:bounds%endg), &
+         c2l_scale_type = 'unity', &
+         l2g_scale_type = 'unity')
 
       err_found = .false.
       do g = bounds%begg, bounds%endg
@@ -613,7 +634,7 @@ contains
                            ! grc_noutputs_partial but not needed at the
                            ! gridcell level
                            gru_wood_productn_gain_grc(g)
-
+         grc_noutputs(g) = grc_noutputs(g) + grc_grazed_nloss(g)
          ! calculate the total gridcell-level nitrogen balance error for this time step
          grc_errnb(g) = (grc_ninputs(g) - grc_noutputs(g)) * dt - &
                         (grc_endnb(g) - grc_begnb(g))

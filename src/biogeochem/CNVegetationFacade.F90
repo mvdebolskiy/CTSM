@@ -97,6 +97,7 @@ module CNVegetationFacade
   use SoilWaterRetentionCurveMod      , only : soil_water_retention_curve_type
   use CLMFatesInterfaceMod            , only : hlm_fates_interface_type
   use CNGrazerType                    , only : grazer_type
+  use SurfaceAlbedoType               , only : surfalb_type
   !
   implicit none
   private
@@ -110,6 +111,7 @@ module CNVegetationFacade
      type(cnveg_state_type)         :: cnveg_state_inst
      type(cnveg_carbonstate_type)   :: cnveg_carbonstate_inst
      type(cnveg_carbonflux_type)    :: cnveg_carbonflux_inst
+     type(grazer_type)              :: grazer_inst
 
      !X!private
 
@@ -271,6 +273,7 @@ contains
        call this%n_products_inst%Init(bounds, species_non_isotope_type('N'))
 
        call this%cn_balance_inst%Init(bounds)
+       call this%grazer_inst%Init(bounds)
 
        ! Initialize the memory for the dgvs_inst data structure regardless of whether
        ! use_cndv is true so that it can be used in associate statements (nag compiler
@@ -515,7 +518,7 @@ contains
                template_multiplier = c14ratio)
        end if
        call this%n_products_inst%restart(bounds, ncid, flag)
-
+       call this%grazer_inst%restart(bounds)
     end if
 
     if (use_cndv) then
@@ -907,7 +910,7 @@ contains
        wateratm2lndbulk_inst, canopystate_inst, soilstate_inst, temperature_inst, &
        soil_water_retention_curve, crop_inst, ch4_inst, &
        photosyns_inst, saturated_excess_runoff_inst, energyflux_inst,          &
-       nutrient_competition_method, fireemis_inst, grazer_inst)
+       nutrient_competition_method, fireemis_inst, grazer_inst, surfalb_inst)
     !
     ! !DESCRIPTION:
     ! Do the main science for CN vegetation that needs to be done before hydrology-drainage
@@ -964,6 +967,7 @@ contains
     type(fireemis_type)                     , intent(inout) :: fireemis_inst
     type(hlm_fates_interface_type)          , intent(inout) :: clm_fates
     type(grazer_type)                       , intent(inout) :: grazer_inst
+    type(surfalb_type)                      , intent(in)    :: surfalb_inst
     !
     ! !LOCAL VARIABLES:
 
@@ -998,7 +1002,7 @@ contains
          wateratm2lndbulk_inst, canopystate_inst, soilstate_inst, temperature_inst, &
          soil_water_retention_curve, crop_inst, ch4_inst, &
          this%dgvs_inst, photosyns_inst, saturated_excess_runoff_inst, energyflux_inst,          &
-         nutrient_competition_method, this%cnfire_method, this%dribble_crophrv_xsmrpool_2atm, grazer_inst)
+         nutrient_competition_method, this%cnfire_method, this%dribble_crophrv_xsmrpool_2atm, grazer_inst, surfalb_inst)
 
     ! fire carbon emissions 
     call CNFireEmisUpdate(bounds, num_soilp, filter_soilp, &
@@ -1142,7 +1146,7 @@ contains
   !-----------------------------------------------------------------------
   subroutine BalanceCheck(this, bounds, num_soilc, filter_soilc, &
        soilbiogeochem_carbonflux_inst, soilbiogeochem_nitrogenflux_inst, &
-       atm2lnd_inst)
+       atm2lnd_inst, grazer_inst)
     !
     ! !DESCRIPTION:
     ! Check the carbon and nitrogen balance
@@ -1160,6 +1164,7 @@ contains
     type(soilbiogeochem_carbonflux_type)    , intent(inout) :: soilbiogeochem_carbonflux_inst
     type(soilbiogeochem_nitrogenflux_type)  , intent(inout) :: soilbiogeochem_nitrogenflux_inst
     type(atm2lnd_type)                      , intent(in)    :: atm2lnd_inst
+    type(grazer_type)                       , intent(in)    :: grazer_inst
     !
     ! !LOCAL VARIABLES:
     integer              :: DA_nstep                   ! time step number
@@ -1181,7 +1186,7 @@ contains
             soilbiogeochem_carbonflux_inst, &
             this%cnveg_carbonflux_inst, &
             this%cnveg_carbonstate_inst, &
-            this%c_products_inst)
+            this%c_products_inst, grazer_inst)
 
        call this%cn_balance_inst%NBalanceCheck( &
             bounds, num_soilc, filter_soilc, &
@@ -1189,7 +1194,7 @@ contains
             this%cnveg_nitrogenflux_inst, &
             this%cnveg_nitrogenstate_inst, &
             this%n_products_inst, &
-            atm2lnd_inst)
+            atm2lnd_inst, grazer_inst)
 
     end if
 

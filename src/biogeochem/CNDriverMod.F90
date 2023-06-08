@@ -45,6 +45,7 @@ module CNDriverMod
   use CLMFatesInterfaceMod            , only : hlm_fates_interface_type
   use CropReprPoolsMod                    , only : nrepr
   use CNGrazerType                    , only : grazer_type
+  use SurfaceAlbedoType               , only : surfalb_type
   !
   ! !PUBLIC TYPES:
   implicit none
@@ -105,7 +106,7 @@ contains
        wateratm2lndbulk_inst, canopystate_inst, soilstate_inst, temperature_inst,          &
        soil_water_retention_curve, crop_inst, ch4_inst,            &
        dgvs_inst, photosyns_inst, saturated_excess_runoff_inst, energyflux_inst,                   &
-       nutrient_competition_method, cnfire_method, dribble_crophrv_xsmrpool_2atm, grazer_inst)
+       nutrient_competition_method, cnfire_method, dribble_crophrv_xsmrpool_2atm, grazer_inst, surfalb_inst)
     !
     ! !DESCRIPTION:
     ! The core CN code is executed here. Calculates fluxes for maintenance
@@ -129,10 +130,10 @@ contains
     use CNCIsoFluxMod                     , only: CIsoFlux1, CIsoFlux2, CIsoFlux2h, CIsoFlux2g, CIsoFlux3
     use CNC14DecayMod                     , only: C14Decay
     use CNCStateUpdate1Mod                , only: CStateUpdate1,CStateUpdate0
-    use CNCStateUpdate2Mod                , only: CStateUpdate2, CStateUpdate2h, CStateUpdate2g
+    use CNCStateUpdate2Mod                , only: CStateUpdate2, CStateUpdate2h, CStateUpdate2g, CStateUpdate2grz
     use CNCStateUpdate3Mod                , only: CStateUpdate3
     use CNNStateUpdate1Mod                , only: NStateUpdate1
-    use CNNStateUpdate2Mod                , only: NStateUpdate2, NStateUpdate2h, NStateUpdate2g
+    use CNNStateUpdate2Mod                , only: NStateUpdate2, NStateUpdate2h, NStateUpdate2g, NStateUpdate2grz
     use CNGapMortalityMod                 , only: CNGapMortality
     use CNSharedParamsMod                 , only: use_fun
     use dynHarvestMod                     , only: CNHarvest
@@ -212,6 +213,7 @@ contains
     logical                                 , intent(in)    :: dribble_crophrv_xsmrpool_2atm
     type(hlm_fates_interface_type)          , intent(inout) :: clm_fates
     type(grazer_type)                       , intent(inout) :: grazer_inst
+    type(surfalb_type)                      , intent(in)    :: surfalb_inst
     !
     ! !LOCAL VARIABLES:
     real(r8):: cn_decomp_pools(bounds%begc:bounds%endc,1:nlevdecomp,1:ndecomp_pools)
@@ -679,16 +681,6 @@ contains
     call t_stopf('SoilBiogeochemLittVertTransp')
 
 
-    !--------------------------------------------
-    ! Calculate grazing carbon and nitrogen fluxes
-    !-------------------------------------------
-    if (use_grazing) then
-      call t_startf('CNGrazing')
-
-      call CNGrazing(bounds, grazer_inst)
-
-      call t_stopf('CNGrazing')
-    endif
 
     !--------------------------------------------
     ! Calculate the gap mortality carbon and nitrogen fluxes
@@ -798,6 +790,25 @@ contains
     call NStateUpdate2h(num_soilc, filter_soilc, num_soilp, filter_soilp, &
          cnveg_nitrogenflux_inst, cnveg_nitrogenstate_inst, soilbiogeochem_nitrogenstate_inst, &
          soilbiogeochem_nitrogenflux_inst)
+
+    !--------------------------------------------
+    ! Calculate grazing carbon and nitrogen fluxes
+    !-------------------------------------------
+    if (use_grazing) then
+      call CNGrazing(bounds, num_soilc, filter_soilc, num_soilp, filter_soilp, &
+            soilbiogeochem_state_inst, cnveg_carbonstate_inst, cnveg_nitrogenstate_inst, &
+            cnveg_carbonflux_inst, cnveg_nitrogenflux_inst, grazer_inst,                 &
+            temperature_inst, surfalb_inst)
+      call CStateUpdate2grz(num_soilc, filter_soilc,  num_soilp, filter_soilp, &
+           cnveg_carbonflux_inst, cnveg_carbonstate_inst, soilbiogeochem_carbonstate_inst, &
+           soilbiogeochem_carbonflux_inst, grazer_inst)
+      call NStateUpdate2grz(num_soilc, filter_soilc, num_soilp, filter_soilp, &
+           cnveg_nitrogenflux_inst, cnveg_nitrogenstate_inst, soilbiogeochem_nitrogenstate_inst, &
+           soilbiogeochem_nitrogenflux_inst, grazer_inst)
+    endif
+
+
+
 
     !--------------------------------------------
     ! Update2g (gross unrepresented landcover change)

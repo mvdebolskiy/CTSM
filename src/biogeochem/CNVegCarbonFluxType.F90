@@ -80,6 +80,29 @@ module CNVegCarbonFluxType
      real(r8), pointer :: hrv_gresp_xfer_to_litter_patch            (:)     ! growth respiration transfer harvest mortality (gC/m2/s)
      real(r8), pointer :: hrv_xsmrpool_to_atm_patch                 (:)     ! excess MR pool harvest mortality (gC/m2/s)
 
+    ! grazing fluxes
+     real(r8), pointer :: grz_leafc_to_litter_patch                 (:)     ! leaf C grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_leafc_storage_to_litter_patch         (:)     ! leaf C storage grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_leafc_xfer_to_litter_patch            (:)     ! leaf C transfer grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_frootc_to_litter_patch                (:)     ! fine root C grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_frootc_storage_to_litter_patch        (:)     ! fine root C storage grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_frootc_xfer_to_litter_patch           (:)     ! fine root C transfer grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_livestemc_to_litter_patch             (:)     ! live stem C grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_livestemc_storage_to_litter_patch     (:)     ! live stem C storage grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_livestemc_xfer_to_litter_patch        (:)     ! live stem C transfer grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_deadstemc_to_litter_patch             (:)     ! dead stem C grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_deadstemc_storage_to_litter_patch     (:)     ! dead stem C storage grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_deadstemc_xfer_to_litter_patch        (:)     ! dead stem C transfer grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_livecrootc_to_litter_patch            (:)     ! live coarse root C grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_livecrootc_storage_to_litter_patch    (:)     ! live coarse root C storage grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_livecrootc_xfer_to_litter_patch       (:)     ! live coarse root C transfer grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_deadcrootc_to_litter_patch            (:)     ! dead coarse root C grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_deadcrootc_storage_to_litter_patch    (:)     ! dead coarse root C storage grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_deadcrootc_xfer_to_litter_patch       (:)     ! dead coarse root C transfer grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_gresp_storage_to_litter_patch         (:)     ! growth respiration storage grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_gresp_xfer_to_litter_patch            (:)     ! growth respiration transfer grazing mortality (gC/m2/s)
+     real(r8), pointer :: grz_to_atm_patch                          (:)     ! excess MR pool grazing mortality (gC/m2/s)
+
      ! fire fluxes 
      real(r8), pointer :: m_leafc_to_fire_patch                     (:)     ! (gC/m2/s) fire C emissions from leafc 
      real(r8), pointer :: m_leafc_storage_to_fire_patch             (:)     ! (gC/m2/s) fire C emissions from leafc_storage             
@@ -252,6 +275,11 @@ module CNVegCarbonFluxType
      real(r8), pointer :: crop_harvestc_to_cropprodc_patch          (:)     ! crop harvest C to crop product pool (gC/m2/s)
      real(r8), pointer :: crop_harvestc_to_cropprodc_col            (:)     ! crop harvest C to crop product pool (gC/m2/s)
 
+     ! grazing
+     real(r8), pointer :: grazing_c_to_litr_c_col                   (:,:,:) ! C fluxes associated with grazing to litter pools (gC/m3/s)
+     real(r8), pointer :: grazing_c_to_cwdc_col                     (:,:)   ! C fluxes associated with grazing to CWD pool (gC/m3/s)
+
+
      ! fire fluxes
      real(r8), pointer :: m_decomp_cpools_to_fire_vr_col            (:,:,:) ! vertically-resolved decomposing C fire loss (gC/m3/s)
      real(r8), pointer :: m_decomp_cpools_to_fire_col               (:,:)   ! vertically-integrated (diagnostic) decomposing C fire loss (gC/m2/s)
@@ -355,6 +383,7 @@ module CNVegCarbonFluxType
      real(r8), pointer :: somfire_col                               (:)     ! (gC/m2/s) soil organic matter fire losses
      real(r8), pointer :: totfire_col                               (:)     ! (gC/m2/s) total ecosystem fire losses
      real(r8), pointer :: hrv_xsmrpool_to_atm_col                   (:)     ! (gC/m2/s) excess MR pool harvest mortality (p2c)
+     real(r8), pointer :: grz_to_atm_col                            (:)     ! (gC/m2/s) excess MR pool grazing mortality (p2c)
 
      ! fire code
      real(r8), pointer :: fire_closs_patch                          (:)     ! (gC/m2/s) total fire C loss 
@@ -371,8 +400,8 @@ module CNVegCarbonFluxType
 
      ! Summary C fluxes. 
      real(r8), pointer :: nep_col        (:) ! (gC/m2/s) net ecosystem production, excludes fire, landuse, and harvest flux, positive for sink
-     real(r8), pointer :: nbp_grc        (:) ! (gC/m2/s) net biome production, includes fire, landuse, harvest and hrv_xsmrpool flux, positive for sink (same as net carbon exchange between land and atmosphere)
-     real(r8), pointer :: nee_grc        (:) ! (gC/m2/s) net ecosystem exchange of carbon, includes fire and hrv_xsmrpool, excludes landuse and harvest flux, positive for source 
+     real(r8), pointer :: nbp_grc        (:) ! (gC/m2/s) net biome production, includes fire, landuse, grazing, harvest and hrv_xsmrpool flux, positive for sink (same as net carbon exchange between land and atmosphere)
+     real(r8), pointer :: nee_grc        (:) ! (gC/m2/s) net ecosystem exchange of carbon, includes fire and hrv_xsmrpool, excludes landuse, grazing and harvest flux, positive for source 
 
      ! Dynamic landcover fluxnes
      real(r8), pointer :: landuseflux_grc(:) ! (gC/m2/s) dwt_conv_cflux+gru_conv_cflux+product_closs
@@ -517,6 +546,27 @@ contains
     allocate(this%hrv_gresp_storage_to_litter_patch         (begp:endp)) ; this%hrv_gresp_storage_to_litter_patch         (:) = nan
     allocate(this%hrv_gresp_xfer_to_litter_patch            (begp:endp)) ; this%hrv_gresp_xfer_to_litter_patch            (:) = nan
     allocate(this%hrv_xsmrpool_to_atm_patch                 (begp:endp)) ; this%hrv_xsmrpool_to_atm_patch                 (:) = 0.0_r8
+    allocate(this%grz_leafc_to_litter_patch                 (begp:endp)) ; this%grz_leafc_to_litter_patch                 (:) = nan
+    allocate(this%grz_leafc_storage_to_litter_patch         (begp:endp)) ; this%grz_leafc_storage_to_litter_patch         (:) = nan
+    allocate(this%grz_leafc_xfer_to_litter_patch            (begp:endp)) ; this%grz_leafc_xfer_to_litter_patch            (:) = nan
+    allocate(this%grz_frootc_to_litter_patch                (begp:endp)) ; this%grz_frootc_to_litter_patch                (:) = nan
+    allocate(this%grz_frootc_storage_to_litter_patch        (begp:endp)) ; this%grz_frootc_storage_to_litter_patch        (:) = nan
+    allocate(this%grz_frootc_xfer_to_litter_patch           (begp:endp)) ; this%grz_frootc_xfer_to_litter_patch           (:) = nan
+    allocate(this%grz_livestemc_to_litter_patch             (begp:endp)) ; this%grz_livestemc_to_litter_patch             (:) = nan
+    allocate(this%grz_livestemc_storage_to_litter_patch     (begp:endp)) ; this%grz_livestemc_storage_to_litter_patch     (:) = nan
+    allocate(this%grz_livestemc_xfer_to_litter_patch        (begp:endp)) ; this%grz_livestemc_xfer_to_litter_patch        (:) = nan
+    allocate(this%grz_deadstemc_to_litter_patch             (begp:endp)) ; this%grz_deadstemc_to_litter_patch             (:) = nan
+    allocate(this%grz_deadstemc_storage_to_litter_patch     (begp:endp)) ; this%grz_deadstemc_storage_to_litter_patch     (:) = nan
+    allocate(this%grz_deadstemc_xfer_to_litter_patch        (begp:endp)) ; this%grz_deadstemc_xfer_to_litter_patch        (:) = nan
+    allocate(this%grz_livecrootc_to_litter_patch            (begp:endp)) ; this%grz_livecrootc_to_litter_patch            (:) = nan
+    allocate(this%grz_livecrootc_storage_to_litter_patch    (begp:endp)) ; this%grz_livecrootc_storage_to_litter_patch    (:) = nan
+    allocate(this%grz_livecrootc_xfer_to_litter_patch       (begp:endp)) ; this%grz_livecrootc_xfer_to_litter_patch       (:) = nan
+    allocate(this%grz_deadcrootc_to_litter_patch            (begp:endp)) ; this%grz_deadcrootc_to_litter_patch            (:) = nan
+    allocate(this%grz_deadcrootc_storage_to_litter_patch    (begp:endp)) ; this%grz_deadcrootc_storage_to_litter_patch    (:) = nan
+    allocate(this%grz_deadcrootc_xfer_to_litter_patch       (begp:endp)) ; this%grz_deadcrootc_xfer_to_litter_patch       (:) = nan
+    allocate(this%grz_gresp_storage_to_litter_patch         (begp:endp)) ; this%grz_gresp_storage_to_litter_patch         (:) = nan
+    allocate(this%grz_gresp_xfer_to_litter_patch            (begp:endp)) ; this%grz_gresp_xfer_to_litter_patch            (:) = nan
+    allocate(this%grz_to_atm_patch                          (begp:endp)) ; this%grz_to_atm_patch                          (:) = 0.0_r8
     allocate(this%m_leafc_to_fire_patch                     (begp:endp)) ; this%m_leafc_to_fire_patch                     (:) = nan
     allocate(this%m_leafc_storage_to_fire_patch             (begp:endp)) ; this%m_leafc_storage_to_fire_patch             (:) = nan
     allocate(this%m_leafc_xfer_to_fire_patch                (begp:endp)) ; this%m_leafc_xfer_to_fire_patch                (:) = nan
@@ -684,6 +734,8 @@ contains
     allocate(this%m_c_to_litr_fire_col              (begc:endc,1:nlevdecomp_full,1:ndecomp_pools)); this%m_c_to_litr_fire_col    (:,:,:)=nan
     allocate(this%harvest_c_to_litr_c_col           (begc:endc,1:nlevdecomp_full,1:ndecomp_pools)); this%harvest_c_to_litr_c_col (:,:,:)=nan
     allocate(this%harvest_c_to_cwdc_col             (begc:endc,1:nlevdecomp_full)); this%harvest_c_to_cwdc_col        (:,:)=nan
+    allocate(this%grazing_c_to_litr_c_col           (begc:endc,1:nlevdecomp_full,1:ndecomp_pools)); this%grazing_c_to_litr_c_col (:,:,:)=nan
+    allocate(this%grazing_c_to_cwdc_col             (begc:endc,1:nlevdecomp_full)); this%grazing_c_to_cwdc_col        (:,:)=nan
 
     allocate(this%dwt_slash_cflux_patch             (begp:endp))                  ; this%dwt_slash_cflux_patch        (:) =nan
     allocate(this%dwt_slash_cflux_grc               (begg:endg))                  ; this%dwt_slash_cflux_grc          (:) =nan
@@ -785,6 +837,7 @@ contains
     allocate(this%fire_closs_col          (begc:endc)) ; this%fire_closs_col          (:) = nan
     allocate(this%wood_harvestc_col       (begc:endc)) ; this%wood_harvestc_col       (:) = nan
     allocate(this%hrv_xsmrpool_to_atm_col (begc:endc)) ; this%hrv_xsmrpool_to_atm_col (:) = 0.0_r8
+    allocate(this%grz_to_atm_col          (begc:endc)) ; this%grz_to_atm_col          (:) = 0.0_r8
     allocate(this%tempsum_npp_patch       (begp:endp)) ; this%tempsum_npp_patch       (:) = nan
     allocate(this%annsum_npp_patch        (begp:endp)) ; this%annsum_npp_patch        (:) = nan
     allocate(this%tempsum_litfall_patch   (begp:endp)) ; this%tempsum_litfall_patch   (:) = nan
@@ -3897,6 +3950,27 @@ contains
        this%hrv_gresp_storage_to_litter_patch(i)         = value_patch     
        this%hrv_gresp_xfer_to_litter_patch(i)            = value_patch        
        this%hrv_xsmrpool_to_atm_patch(i)                 = value_patch
+       this%grz_leafc_to_litter_patch(i)                 = value_patch             
+       this%grz_leafc_storage_to_litter_patch(i)         = value_patch     
+       this%grz_leafc_xfer_to_litter_patch(i)            = value_patch        
+       this%grz_frootc_to_litter_patch(i)                = value_patch            
+       this%grz_frootc_storage_to_litter_patch(i)        = value_patch    
+       this%grz_frootc_xfer_to_litter_patch(i)           = value_patch       
+       this%grz_livestemc_to_litter_patch(i)             = value_patch         
+       this%grz_livestemc_storage_to_litter_patch(i)     = value_patch 
+       this%grz_livestemc_xfer_to_litter_patch(i)        = value_patch    
+       this%grz_deadstemc_to_litter_patch(i)             = value_patch
+       this%grz_deadstemc_storage_to_litter_patch(i)     = value_patch 
+       this%grz_deadstemc_xfer_to_litter_patch(i)        = value_patch    
+       this%grz_livecrootc_to_litter_patch(i)            = value_patch        
+       this%grz_livecrootc_storage_to_litter_patch(i)    = value_patch
+       this%grz_livecrootc_xfer_to_litter_patch(i)       = value_patch   
+       this%grz_deadcrootc_to_litter_patch(i)            = value_patch        
+       this%grz_deadcrootc_storage_to_litter_patch(i)    = value_patch
+       this%grz_deadcrootc_xfer_to_litter_patch(i)       = value_patch   
+       this%grz_gresp_storage_to_litter_patch(i)         = value_patch     
+       this%grz_gresp_xfer_to_litter_patch(i)            = value_patch        
+       this%grz_to_atm_patch(i)                          = value_patch
 
        this%gru_leafc_to_litter_patch(i)                 = value_patch             
        this%gru_leafc_storage_to_atm_patch(i)            = value_patch     
@@ -4118,12 +4192,14 @@ contains
              this%phenology_c_to_litr_c_col(i,j,k)     = value_column
              this%gap_mortality_c_to_litr_c_col(i,j,k) = value_column
              this%harvest_c_to_litr_c_col(i,j,k)       = value_column
+             this%grazing_c_to_litr_c_col(i,j,k)       = value_column
              this%m_c_to_litr_fire_col(i,j,k)          = value_column
              this%gru_c_to_litr_c_col(i,j,k)           = value_column
           end do
           this%gap_mortality_c_to_cwdc_col(i,j)       = value_column
           this%fire_mortality_c_to_cwdc_col(i,j)      = value_column
           this%harvest_c_to_cwdc_col(i,j)             = value_column          
+          this%grazing_c_to_cwdc_col(i,j)             = value_column          
           this%gru_c_to_cwdc_col(i,j)                 = value_column          
 
        end do
@@ -4209,6 +4285,7 @@ contains
        this%fire_closs_col(i)          = value_column 
        this%wood_harvestc_col(i)       = value_column 
        this%hrv_xsmrpool_to_atm_col(i) = value_column
+       this%grz_to_atm_col(i)          = value_column
        this%gru_conv_cflux_col(i)      = value_column 
        this%gru_wood_productc_gain_col(i) = value_column
 
@@ -4567,6 +4644,27 @@ contains
             this%hrv_deadcrootc_xfer_to_litter_patch(p)       + &
             this%hrv_gresp_storage_to_litter_patch(p)         + &
             this%hrv_gresp_xfer_to_litter_patch(p)            + &
+
+            this%grz_leafc_to_litter_patch(p)                 + &
+            this%grz_leafc_storage_to_litter_patch(p)         + &
+            this%grz_leafc_xfer_to_litter_patch(p)            + &
+            this%grz_frootc_to_litter_patch(p)                + &
+            this%grz_frootc_storage_to_litter_patch(p)        + &
+            this%grz_frootc_xfer_to_litter_patch(p)           + &
+            this%grz_livestemc_to_litter_patch(p)             + &
+            this%grz_livestemc_storage_to_litter_patch(p)     + &
+            this%grz_livestemc_xfer_to_litter_patch(p)        + &
+            this%grz_deadstemc_to_litter_patch(p)             + &
+            this%grz_deadstemc_storage_to_litter_patch(p)     + &
+            this%grz_deadstemc_xfer_to_litter_patch(p)        + &
+            this%grz_livecrootc_to_litter_patch(p)            + &
+            this%grz_livecrootc_storage_to_litter_patch(p)    + &
+            this%grz_livecrootc_xfer_to_litter_patch(p)       + &
+            this%grz_deadcrootc_to_litter_patch(p)            + &
+            this%grz_deadcrootc_storage_to_litter_patch(p)    + &
+            this%grz_deadcrootc_xfer_to_litter_patch(p)       + &
+            this%grz_gresp_storage_to_litter_patch(p)         + &
+            this%grz_gresp_xfer_to_litter_patch(p)            + &
             
             this%gru_leafc_to_litter_patch(p)                 + &
             this%gru_frootc_to_litter_patch(p)                + &
@@ -4639,6 +4737,7 @@ contains
             this%m_frootc_to_fire_patch(p)         + &
             this%m_frootc_to_litter_fire_patch(p)  + &
             this%hrv_frootc_to_litter_patch(p)     + &
+            this%grz_frootc_to_litter_patch(p)     + &
             this%frootc_to_litter_patch(p)
 
        ! (LEAFC_ALLOC) - leaf C allocation
@@ -4652,6 +4751,7 @@ contains
             this%m_leafc_to_fire_patch(p)        + &
             this%m_leafc_to_litter_fire_patch(p) + &
             this%hrv_leafc_to_litter_patch(p)    + &
+            this%grz_leafc_to_litter_patch(p)    + &
             this%gru_leafc_to_litter_patch(p)    + &
             this%leafc_to_litter_patch(p)
 
@@ -4688,6 +4788,19 @@ contains
             this%hrv_deadcrootc_to_litter_patch(p)         + &
             this%hrv_deadcrootc_storage_to_litter_patch(p) + &
             this%hrv_deadcrootc_xfer_to_litter_patch(p)    + &
+            this%grz_livestemc_to_litter_patch(p)          + &
+            this%grz_livestemc_storage_to_litter_patch(p)  + &
+            this%grz_livestemc_xfer_to_litter_patch(p)     + &
+            this%grz_livestemc_to_litter_patch(p)          + &
+            this%grz_deadstemc_to_litter_patch(p)          + &
+            this%grz_deadstemc_storage_to_litter_patch(p)  + &
+            this%grz_deadstemc_xfer_to_litter_patch(p)     + &
+            this%grz_livecrootc_to_litter_patch(p)         + &
+            this%grz_livecrootc_storage_to_litter_patch(p) + &
+            this%grz_livecrootc_xfer_to_litter_patch(p)    + &
+            this%grz_deadcrootc_to_litter_patch(p)         + &
+            this%grz_deadcrootc_storage_to_litter_patch(p) + &
+            this%grz_deadcrootc_xfer_to_litter_patch(p)    + &
             this%gru_livestemc_to_atm_patch(p)             + &
             this%gru_livestemc_storage_to_atm_patch(p)     + &
             this%gru_livestemc_xfer_to_atm_patch(p)        + &
@@ -4762,6 +4875,10 @@ contains
     call p2c(bounds, num_soilc, filter_soilc, &
          this%hrv_xsmrpool_to_atm_patch(bounds%begp:bounds%endp), &
          this%hrv_xsmrpool_to_atm_col(bounds%begc:bounds%endc))
+
+    call p2c(bounds, num_soilc, filter_soilc, &
+         this%grz_to_atm_patch(bounds%begp:bounds%endp), &
+         this%grz_to_atm_col(bounds%begc:bounds%endc))
 
     if (use_crop .and. this%dribble_crophrv_xsmrpool_2atm) then
        call p2c(bounds, num_soilc, filter_soilc, &

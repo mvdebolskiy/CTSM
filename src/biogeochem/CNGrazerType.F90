@@ -15,6 +15,7 @@ module CNGrazerType
   use LandunitType    , only : lun
   use ColumnType      , only : col
   use PatchType       , only : patch
+  use pftconMod       , only : pftcon
 
  implicit none
   save
@@ -22,11 +23,17 @@ module CNGrazerType
   !
   type, public :: grazer_type
 
-    integer           :: num_grazed_pfts                 = 3 ! number of pfts to graze
-    integer           :: grazed_pfts(3)                  = ispval ! pfts to be grazed
-    logical,  pointer :: is_grazed                       (:) !
-    real(r8), pointer :: grazed_totc_patch             (:) ! patch grazed biomass gC/m2s
-    real(r8), pointer :: grazed_totc_col               (:) ! column grazed biomass gC/m2s
+    integer              num_grazed_pfts                 ! number of pfts to graze
+    integer,  pointer :: grazed_pfts(:)                  ! pfts to be grazed
+    real(r8), pointer :: grazed_totc_patch               (:) ! patch grazed carbon flux gC/m2/s
+    real(r8), pointer :: grazed_closs_patch              (:) ! patch carbon loss from grazing gC/m2/s
+    real(r8), pointer :: grazed_totc_col                 (:) ! column grazed carbon flux gC/m2/s
+    real(r8), pointer :: grazed_closs_col                (:) ! column carbon loss flux from grazing gC/m2/s
+    real(r8), pointer :: grazed_totn_patch               (:) ! patch grazed nitrogen flux gN/m2/s
+    real(r8), pointer :: grazed_nloss_patch              (:) ! patch nitrogen loss flux from grazing gN/m2/s
+    real(r8), pointer :: grazed_totn_col                 (:) ! column grazed nitrogen flux gN/m2/s
+    real(r8), pointer :: grazed_nloss_col                (:) ! col nitrogen loss flux from grazing gN/m2/s
+    
 
   contains
 
@@ -55,10 +62,9 @@ contains
     type(bounds_type) , intent(in) :: bounds
 
     call this%InitAllocate (bounds)
-    if (use_grazing) then
-      call this%InitHistory (bounds)
-      call this%InitCold (bounds)
-    endif
+    call this%InitHistory (bounds)
+    call this%InitCold (bounds)
+
 
   end subroutine Init
 
@@ -75,13 +81,28 @@ contains
     type(bounds_type) , intent(in) :: bounds
 
     ! !LOCAL VARIABLES:
-
+    integer :: p,j
     !------------------------------------------------------------------------
 
     !allocate(this%grazed_pfts  (1:this%num_grazed_pfts))                      ; this%grazed_pfts                     (:)   = ispval
     allocate(this%grazed_totc_patch (bounds%begp:bounds%endp))                ; this%grazed_totc_patch      (:) = nan
+    allocate(this%grazed_closs_patch (bounds%begp:bounds%endp))                ; this%grazed_closs_patch      (:) = nan
+    allocate(this%grazed_totn_patch (bounds%begp:bounds%endp))                ; this%grazed_totn_patch      (:) = nan
+    allocate(this%grazed_nloss_patch (bounds%begp:bounds%endp))                ; this%grazed_nloss_patch      (:) = nan
     allocate(this%grazed_totc_col   (bounds%begc:bounds%endc))                ; this%grazed_totc_col        (:) = nan
-    allocate(this%is_grazed           (bounds%begp:bounds%endp))                ; this%is_grazed                (:) = .false.
+    allocate(this%grazed_closs_col   (bounds%begc:bounds%endc))                ; this%grazed_closs_col        (:) = nan
+    allocate(this%grazed_totn_col   (bounds%begc:bounds%endc))                ; this%grazed_totn_col        (:) = nan
+    allocate(this%grazed_nloss_col   (bounds%begc:bounds%endc))                ; this%grazed_nloss_col        (:) = nan
+
+    j = 0
+    do p = 0, mxpft
+      if ( pftcon%is_grass(p) == .true. ) then
+          j = j +1
+      endif
+    end do
+    this%num_grazed_pfts = j
+    write(iulog, *) 'num grazed pfts:   ', this%num_grazed_pfts
+    allocate(this%grazed_pfts(1:this%num_grazed_pfts)) ; this%grazed_pfts(:) = ispval
 
   end subroutine InitAllocate
 
@@ -114,12 +135,20 @@ contains
 
     this%grazed_totc_col(begc:endc) = spval
     call hist_addfld1d (fname='GRAZED_TOTC_COL',  units='gC/m2s',  &
-         avgflag='A', long_name='grazed aboveground biomass', &
+         avgflag='A', long_name='grazed aboveground carbon', &
          ptr_col=this%grazed_totc_col)
 
     this%grazed_totc_patch(begp:endp) = spval
     call hist_addfld1d (fname='GRAZED_TOTC_PATCH', units='gC/m2s',  &
-         avgflag='A', long_name='grazed aboveground biomass per patch', &
+         avgflag='A', long_name='grazed aboveground carbon per patch', &
+         ptr_patch=this%grazed_totc_patch)
+    this%grazed_totn_col(begc:endc) = spval
+    call hist_addfld1d (fname='GRAZED_TOTN_COL',  units='gN/m2s',  &
+         avgflag='A', long_name='grazed aboveground nitrogen', &
+         ptr_col=this%grazed_totc_col)
+    this%grazed_totn_patch(begp:endp) = spval
+    call hist_addfld1d (fname='GRAZED_TOTN_PATCH', units='gN/m2s',  &
+         avgflag='A', long_name='grazed aboveground nitrogen per patch', &
          ptr_patch=this%grazed_totc_patch)
 
 
@@ -136,48 +165,72 @@ contains
     ! !USES:
     use shr_infnan_mod , only : nan => shr_infnan_nan, assignment(=)
     use clm_varctl     , only : use_cn, use_cndv
-    use pftconMod      , only : pftcon
 
     ! !ARGUMENTS:
     class(grazer_type)        :: this
     type(bounds_type) , intent(in) :: bounds
 
     ! !LOCAL VARIABLES:
-    integer :: l,c,p,j
-    integer :: begp, endp
-    integer :: begc, endc
-    integer :: begl, endl
-    integer :: begg, endg
-    !------------------------------------------------------------------------
+    integer :: p, c, l, j, i
+    integer :: fi                                        ! filter index
+    integer :: num_special_col                           ! number of good values in special_col filter
+    integer :: num_special_patch                         ! number of good values in special_patch filter
+    integer :: special_col(bounds%endc-bounds%begc+1)    ! special landunit filter - columns
+    integer :: special_patch(bounds%endp-bounds%begp+1)  ! special landunit filter - patches
+    !-----------------------------------------------------------------------
 
-    begp = bounds%begp; endp= bounds%endp
-    begc = bounds%begc; endc= bounds%endc
-    begl = bounds%begl; endl= bounds%endl
-    begg = bounds%begg; endg= bounds%endg
+    ! Set column filters
+
+
+    num_special_col = 0
+    do c = bounds%begc, bounds%endc
+       l = col%landunit(c)
+       if (lun%ifspecial(l)) then
+          num_special_col = num_special_col + 1
+          special_col(num_special_col) = c
+       end if
+    end do
+
+    ! Set patch filters
+
+    num_special_patch = 0
+    do p = bounds%begp,bounds%endp
+       l = patch%landunit(p)
+
+       if (lun%ifspecial(l)) then
+          num_special_patch = num_special_patch + 1
+          special_patch(num_special_patch) = p
+       end if
+    end do
+
+
 
     j = 0
-              write(iulog, *) 'num grazed pfts:   ', this%num_grazed_pfts
     do p = 0, mxpft
       if ( pftcon%is_grass(p) == .true. ) then
           j = j +1
-          write(iulog, *) 'grazed pft:   ', p
           this%grazed_pfts(j) = p
-          
+          write(iulog, *) 'grazed pft:   ', this%grazed_pfts(j)
       endif
     end do
 
-      do p = bounds%begp, bounds%endp
-        c = patch%column(p)
-        l = patch%landunit(p)
-        if ( ANY(this%grazed_pfts == patch%itype(p)) ) then
-          this%grazed_totc_patch(p) = 1.0_r8
-          this%grazed_totc_col(c) = 1.0_r8
-          this%is_grazed(p) = .true.
-        else
-          this%grazed_totc_patch(p) = 0.0_r8
-          this%grazed_totc_col(c) = 0.0_r8
-        endif
-      end do
+    write(iulog, *) 'CNgrazed pfts:   ', this%grazed_pfts
+
+    do fi = 1,num_special_patch
+       i = special_patch(fi)
+          this%grazed_totc_patch(i) = 0.0_r8
+          this%grazed_closs_patch(i) = 0.0_r8
+          this%grazed_totn_patch(i) = 0.0_r8
+          this%grazed_nloss_patch(i) = 0.0_r8
+    enddo
+
+    do fi = 1,num_special_col
+       i = special_col(fi)
+          this%grazed_totc_col(i) = 0.0_r8
+          this%grazed_closs_col(i) = 0.0_r8
+          this%grazed_totn_col(i) = 0.0_r8
+          this%grazed_nloss_col(i) = 0.0_r8
+    enddo
 
   end subroutine InitCold
 
@@ -198,6 +251,7 @@ contains
     type(bounds_type) , intent(in) :: bounds
 
     ! !LOCAL VARIABLES:
+    integer :: l,c,p,j
     integer :: begp, endp
     integer :: begc, endc
     integer :: begl, endl
@@ -208,8 +262,6 @@ contains
     begc = bounds%begc; endc= bounds%endc
     begl = bounds%begl; endl= bounds%endl
     begg = bounds%begg; endg= bounds%endg
-
-
 
 
 

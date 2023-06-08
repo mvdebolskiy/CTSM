@@ -19,6 +19,7 @@
   use SoilBiogeochemCarbonFluxtype   , only : soilbiogeochem_carbonflux_type
   use CNSharedParamsMod              , only : use_matrixcn
   use SoilBiogeochemDecompCascadeConType , only : use_soil_matrixcn
+  use CNGrazerType                       , only : grazer_type
   !
   implicit none
   private
@@ -27,6 +28,7 @@
   public:: CStateUpdate2
   public:: CStateUpdate2h
   public:: CStateUpdate2g
+  public:: CStateUpdate2grz
   !-----------------------------------------------------------------------
 
 contains
@@ -436,5 +438,156 @@ contains
     end associate
 
   end subroutine CStateUpdate2g
+
+  !-----------------------------------------------------------------------
+  subroutine CStateUpdate2grz(num_soilc, filter_soilc, num_soilp, filter_soilp, &
+       cnveg_carbonflux_inst, cnveg_carbonstate_inst, soilbiogeochem_carbonstate_inst, &
+       soilbiogeochem_carbonflux_inst, grazer_inst)
+    !
+    ! !DESCRIPTION:
+    ! Update all the prognostic carbon state
+    ! variables affected by grazing mortality fluxes
+    !
+    ! !ARGUMENTS:
+    integer                                , intent(in)    :: num_soilc       ! number of soil columns in filter
+    integer                                , intent(in)    :: filter_soilc(:) ! filter for soil columns
+    integer                                , intent(in)    :: num_soilp       ! number of soil patches in filter
+    integer                                , intent(in)    :: filter_soilp(:) ! filter for soil patches
+    type(cnveg_carbonflux_type)            , intent(in)    :: cnveg_carbonflux_inst
+    type(cnveg_carbonstate_type)           , intent(inout) :: cnveg_carbonstate_inst
+    type(soilbiogeochem_carbonflux_type)   , intent(inout) :: soilbiogeochem_carbonflux_inst
+    type(soilbiogeochem_carbonstate_type)  , intent(inout) :: soilbiogeochem_carbonstate_inst
+    type(grazer_type)                      , intent(inout) :: grazer_inst
+
+    !
+    ! !LOCAL VARIABLES:
+    integer :: c,p,j,k,l,i  ! indices
+    integer :: fp,fc     ! lake filter indices
+    real(r8):: dt        ! radiation time step (seconds)
+    !-----------------------------------------------------------------------
+
+    associate(                                     & 
+         cf_veg => cnveg_carbonflux_inst         , &
+         cs_veg => cnveg_carbonstate_inst        , &
+         cf_soil => soilbiogeochem_carbonflux_inst, & 
+         cs_soil => soilbiogeochem_carbonstate_inst, &
+         grazer => grazer_inst                      &
+         )
+     
+      ! set time steps
+      dt = get_step_size_real()
+
+      ! column level carbon fluxes from grazing mortality
+      do j = 1, nlevdecomp
+         do fc = 1,num_soilc
+            c = filter_soilc(fc)
+
+            ! column grazing fluxes
+
+            !
+            ! State update without the matrix solution
+            !
+            if (.not. use_soil_matrixcn)then
+               do i = i_litr_min, i_litr_max
+                  cs_soil%decomp_cpools_vr_col(c,j,i) = &
+                    cs_soil%decomp_cpools_vr_col(c,j,i) + &
+                    cf_veg%grazing_c_to_litr_c_col(c,j,i) * dt
+               end do
+               ! Currently i_cwd .ne. i_litr_max + 1 if .not. fates and
+               !           i_cwd = 0 if fates, so not including in the i-loop
+               cs_soil%decomp_cpools_vr_col(c,j,i_cwd) = &
+                    cs_soil%decomp_cpools_vr_col(c,j,i_cwd) + cf_veg%grazing_c_to_cwdc_col(c,j)  * dt
+            !
+            ! For the matrix solution the actual state update comes after the matrix
+            ! multiply in SoilMatrix, but the matrix needs to be setup with
+            ! the equivalent of above. Those changes can be here or in the
+            ! native subroutines dealing with that field
+            !
+            else
+               ! Match above for matrix method
+               do i = i_litr_min, i_litr_max
+               end do
+               ! Currently i_cwd .ne. i_litr_max + 1 if .not. fates and
+               !           i_cwd = 0 if fates, so not including in the i-loop
+            end if
+
+            ! wood to product pools - states updated in CNProducts
+         end do
+      end do
+
+      ! patch loop
+      do fp = 1,num_soilp
+         p = filter_soilp(fp)
+
+         ! patch-level carbon fluxes from grazing mortality
+         ! storage pools
+         cs_veg%gresp_storage_patch(p) = cs_veg%gresp_storage_patch(p)           &
+              - cf_veg%grz_gresp_storage_to_litter_patch(p) * dt
+
+         ! transfer pools
+         cs_veg%gresp_xfer_patch(p) = cs_veg%gresp_xfer_patch(p)                 &
+              - cf_veg%grz_gresp_xfer_to_litter_patch(p) * dt
+
+
+         !
+         ! State update without the matrix solution
+         !
+         if(.not. use_matrixcn)then
+            ! displayed pools
+            cs_veg%leafc_patch(p) = cs_veg%leafc_patch(p)                           &
+              - cf_veg%grz_leafc_to_litter_patch(p) * dt
+            cs_veg%frootc_patch(p) = cs_veg%frootc_patch(p)                         &
+              - cf_veg%grz_frootc_to_litter_patch(p) * dt
+            cs_veg%livestemc_patch(p) = cs_veg%livestemc_patch(p)                   &
+              - cf_veg%grz_livestemc_to_litter_patch(p) * dt
+            cs_veg%deadstemc_patch(p) = cs_veg%deadstemc_patch(p)                   &
+              - cf_veg%grz_deadstemc_to_litter_patch(p) * dt
+            cs_veg%livecrootc_patch(p) = cs_veg%livecrootc_patch(p)                 &
+              - cf_veg%grz_livecrootc_to_litter_patch(p) * dt
+            cs_veg%deadcrootc_patch(p) = cs_veg%deadcrootc_patch(p)                 &
+              - cf_veg%grz_deadcrootc_to_litter_patch(p) * dt
+
+            ! storage pools
+            cs_veg%leafc_storage_patch(p) = cs_veg%leafc_storage_patch(p)           &
+              - cf_veg%grz_leafc_storage_to_litter_patch(p) * dt
+            cs_veg%frootc_storage_patch(p) = cs_veg%frootc_storage_patch(p)         &
+              - cf_veg%grz_frootc_storage_to_litter_patch(p) * dt
+            cs_veg%livestemc_storage_patch(p) = cs_veg%livestemc_storage_patch(p)   &
+              - cf_veg%grz_livestemc_storage_to_litter_patch(p) * dt
+            cs_veg%deadstemc_storage_patch(p) = cs_veg%deadstemc_storage_patch(p)   &
+              - cf_veg%grz_deadstemc_storage_to_litter_patch(p) * dt
+            cs_veg%livecrootc_storage_patch(p) = cs_veg%livecrootc_storage_patch(p) &
+              - cf_veg%grz_livecrootc_storage_to_litter_patch(p) * dt
+            cs_veg%deadcrootc_storage_patch(p) = cs_veg%deadcrootc_storage_patch(p) &
+              - cf_veg%grz_deadcrootc_storage_to_litter_patch(p) * dt
+
+            ! transfer pools
+            cs_veg%leafc_xfer_patch(p) = cs_veg%leafc_xfer_patch(p)                 &
+              - cf_veg%grz_leafc_xfer_to_litter_patch(p) * dt
+            cs_veg%frootc_xfer_patch(p) = cs_veg%frootc_xfer_patch(p)               &
+              - cf_veg%grz_frootc_xfer_to_litter_patch(p) * dt
+            cs_veg%livestemc_xfer_patch(p) = cs_veg%livestemc_xfer_patch(p)         &
+              - cf_veg%grz_livestemc_xfer_to_litter_patch(p) * dt
+            cs_veg%deadstemc_xfer_patch(p) = cs_veg%deadstemc_xfer_patch(p)         &
+              - cf_veg%grz_deadstemc_xfer_to_litter_patch(p) * dt
+            cs_veg%livecrootc_xfer_patch(p) = cs_veg%livecrootc_xfer_patch(p)       &
+              - cf_veg%grz_livecrootc_xfer_to_litter_patch(p) * dt
+            cs_veg%deadcrootc_xfer_patch(p) = cs_veg%deadcrootc_xfer_patch(p)       &
+              - cf_veg%grz_deadcrootc_xfer_to_litter_patch(p) * dt
+         !
+         ! For the matrix solution the actual state update comes after the matrix
+         ! multiply in VegMatrix, but the matrix needs to be setup with
+         ! the equivalent of above. Those changes can be here or in the
+         ! native subroutines dealing with that field
+         !
+         else
+            ! NOTE: The matrix equivalent of the above is in CNGrazingMod CNgrazing (EBK 11/25/2019)
+         end if
+
+      end do ! end of patch loop
+
+    end associate
+
+  end subroutine CStateUpdate2grz
 
 end module CNCStateUpdate2Mod
