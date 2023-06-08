@@ -1184,7 +1184,7 @@ contains
             soilbiogeochem_carbonflux_inst, &
             this%cnveg_carbonflux_inst, &
             this%cnveg_carbonstate_inst, &
-            this%c_products_inst, grazer_inst)
+            this%c_products_inst, this%grazer_inst)
 
        call this%cn_balance_inst%NBalanceCheck( &
             bounds, num_soilc, filter_soilc, &
@@ -1192,7 +1192,7 @@ contains
             this%cnveg_nitrogenflux_inst, &
             this%cnveg_nitrogenstate_inst, &
             this%n_products_inst, &
-            atm2lnd_inst, grazer_inst)
+            atm2lnd_inst, this%grazer_inst)
 
     end if
 
