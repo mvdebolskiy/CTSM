@@ -634,7 +634,6 @@ contains
                            ! grc_noutputs_partial but not needed at the
                            ! gridcell level
                            gru_wood_productn_gain_grc(g)
-         grc_noutputs(g) = grc_noutputs(g) + grc_grazed_nloss(g)
          ! calculate the total gridcell-level nitrogen balance error for this time step
          grc_errnb(g) = (grc_ninputs(g) - grc_noutputs(g)) * dt - &
                         (grc_endnb(g) - grc_begnb(g))

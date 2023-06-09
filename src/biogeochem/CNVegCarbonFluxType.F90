@@ -3525,7 +3525,7 @@ contains
           special_col(num_special_col) = c
        end if
     end do
-
+    write(iulog, * ) 'num_speccol_cnf', num_special_col
     ! Set patch filters
 
     num_special_patch = 0
@@ -3537,7 +3537,7 @@ contains
           special_patch(num_special_patch) = p
        end if
     end do
-
+    write(iulog, * ) 'num_specpat_cnf', num_special_patch
     do p = bounds%begp,bounds%endp
        l = patch%landunit(p)
        this%gpp_before_downreg_patch(p)       = 0._r8

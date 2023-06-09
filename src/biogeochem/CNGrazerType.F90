@@ -11,6 +11,7 @@ module CNGrazerType
   use clm_varctl      , only : iulog, use_grazing
   use clm_varpar      , only : mxpft
   use clm_varcon      , only : spval, ispval
+  use landunit_varcon , only : istsoil, istcrop, istdlak 
   use GridcellType    , only : grc
   use LandunitType    , only : lun
   use ColumnType      , only : col
@@ -173,37 +174,9 @@ contains
     ! !LOCAL VARIABLES:
     integer :: p, c, l, j, i
     integer :: fi                                        ! filter index
-    integer :: num_special_col                           ! number of good values in special_col filter
-    integer :: num_special_patch                         ! number of good values in special_patch filter
-    integer :: special_col(bounds%endc-bounds%begc+1)    ! special landunit filter - columns
-    integer :: special_patch(bounds%endp-bounds%begp+1)  ! special landunit filter - patches
     !-----------------------------------------------------------------------
 
     ! Set column filters
-
-
-    num_special_col = 0
-    do c = bounds%begc, bounds%endc
-       l = col%landunit(c)
-       if (lun%ifspecial(l)) then
-          num_special_col = num_special_col + 1
-          special_col(num_special_col) = c
-       end if
-    end do
-
-    ! Set patch filters
-
-    num_special_patch = 0
-    do p = bounds%begp,bounds%endp
-       l = patch%landunit(p)
-
-       if (lun%ifspecial(l)) then
-          num_special_patch = num_special_patch + 1
-          special_patch(num_special_patch) = p
-       end if
-    end do
-
-
 
     j = 0
     do p = 0, mxpft
@@ -216,21 +189,39 @@ contains
 
     write(iulog, *) 'CNgrazed pfts:   ', this%grazed_pfts
 
-    do fi = 1,num_special_patch
-       i = special_patch(fi)
-          this%grazed_totc_patch(i) = 0.0_r8
-          this%grazed_closs_patch(i) = 0.0_r8
-          this%grazed_totn_patch(i) = 0.0_r8
-          this%grazed_nloss_patch(i) = 0.0_r8
+    do p = bounds%begp, bounds%endp
+       l = patch%landunit(p)
+       if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
+          this%grazed_totc_patch(p) = 0.0_r8
+          this%grazed_closs_patch(p) = 0.0_r8
+          this%grazed_totn_patch(p) = 0.0_r8
+          this%grazed_nloss_patch(p) = 0.0_r8
+       endif
     enddo
 
-    do fi = 1,num_special_col
-       i = special_col(fi)
-          this%grazed_totc_col(i) = 0.0_r8
-          this%grazed_closs_col(i) = 0.0_r8
-          this%grazed_totn_col(i) = 0.0_r8
-          this%grazed_nloss_col(i) = 0.0_r8
+    do c = bounds%begc, bounds%endc
+       l = col%landunit(c)
+       if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop ) then
+          this%grazed_totc_col(c) = 0.0_r8
+          this%grazed_closs_col(c) = 0.0_r8
+          this%grazed_totn_col(c) = 0.0_r8
+          this%grazed_nloss_col(c) = 0.0_r8
+        endif
     enddo
+    
+
+    do c = bounds%begc, bounds%endc
+       l = col%landunit(c)
+       if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
+          write(iulog, * ) 'graz_totc_col', this%grazed_totc_col(c)
+       end if
+    end do
+    do p = bounds%begp, bounds%endp
+       l = patch%landunit(l)
+       if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
+          write(iulog, * ) 'graz_totc_patch', this%grazed_totc_patch(p)
+       end if
+    end do
 
   end subroutine InitCold
 

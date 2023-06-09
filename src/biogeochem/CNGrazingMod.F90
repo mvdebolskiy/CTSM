@@ -13,6 +13,7 @@ module CNGrazingMod
   use abortutils              , only : endrun
   use perf_mod                , only : t_startf, t_stopf
   use clm_varctl              , only : iulog
+  use clm_time_manager        , only : get_curr_date
   use clm_varcon              , only : c_to_b, secspday
   use GridcellType            , only : grc
   use LandunitType            , only : lun
@@ -129,6 +130,7 @@ contains
 
     !
     ! !LOCAL VARIABLES:
+    integer :: yr,mon,day,mcsec        ! outputs from get_curr_date
     integer :: p                         ! patch index
     integer :: g                         ! gridcell index
     integer :: c                         ! column index
@@ -198,7 +200,7 @@ contains
          deadcrootn_xfer                     =>    cnveg_nitrogenstate_inst%deadcrootn_xfer_patch                 , & ! Input:  [real(r8) (:)]  (gN/m2) dead coarse root N transfer               
 
         coszen                               =>    surfalb_inst%coszen_col                                        , & ! Input:  [real(r8) (:)] column cosine of solar zenith angle
-        t_ref2m_min                          =>    temperature_inst%t_ref2m_min_inst_patch                        , & ! Input:  [real(r8) (:)] patch instantaneous daily min of average 2 m height surface air temp (K)
+        t_veg10_day                         =>    temperature_inst%t_veg10_day_patch                             , & ! Input:  [real(r8) (:)] 10 day running mean of patch daytime time vegetation temperature (Kelvin), LUNA specific, but can be reused
         leafcn                               =>    pftcon%leafcn                                                  , & ! Input:  leaf C:N (gC/gN)
 
 
@@ -253,16 +255,13 @@ contains
                                                     
          )
 
-        write(iulog, *) 'ololo num grazed pft:   ', grazer_inst%num_grazed_pfts
-        do p = 1,grazer_inst%num_grazed_pfts
-          write(iulog, *) 'ololo grazed pft:   ', grazed_pfts(p)
-        enddo
+
 
       dtime = get_step_size_real()
       ! valuse for Luo(2012)
-      vr = 6.75_r8 * 10000.0_r8 / c_to_b  ! convert from kg/ha biomass to gC/m2/sheep
-      cx = 2.4_r8 / c_to_b /1000.0_r8 / secspday ! convert from kg/day biomass to gC/sec per animal
-      s  = 0.011 * 10000.0_r8 / secspday  ! convert from ha/day to m2/sec 
+      vr = 150.0_r8 * 1000 / 10000.0_r8 / c_to_b  ! convert from kg/ha biomass to gC/m2/sheep
+      cx = 10.4_r8 / c_to_b * 1000.0_r8 / secspday ! convert from kg/day biomass to gC/sec per animal
+      s  = 0.067 * 10000.0_r8 / secspday  ! convert from ha/day to m2/sec 
       herbdens  = 10.0_r8 / 10000.0_r8           ! convert from animal/ha to animal/m2
       ch4_frac = 0.03_r8 ! ch4 output by grazers constant in C
       crherbfrac = 0.5_r8       ! fraction of herbivore respiration
@@ -274,7 +273,6 @@ contains
         p = filter_soilp(fp)
         g = patch%gridcell(p)
         c = patch%column(p)
-        write(iulog, *) 'alala pft:   ', ivt(p)
         grassbioc = 0.0_r8
         grassbion = 0.0_r8
         grasscn   = 1.0_r8
@@ -285,9 +283,12 @@ contains
         grazed_closs(p) = 0.0_r8
         grazed_nloss(p) = 0.0_r8
         if (any(grazed_pfts  == ivt(p))) then
-          if ( coszen(c) > 0.0_r8 .and. t_ref2m_min(p) >= 273.15_r8 ) then
+          write( iulog , * ) 'grz_check1'
+          if ( coszen(c) > 0.0_r8 .and. t_veg10_day(p) >= 277.15_r8 ) then
             !get aboveground grazable biomass
-
+            write( iulog , * ) 'grz_check2'
+            call get_curr_date(yr,mon,day,mcsec)
+            write( iulog , * ) 'grzdate ', yr,' ', mon,' ', day,' ', mcsec/3600 
               grassbioc =  leafc(p)              + &
                            leafc_storage(p)      + &
                            leafc_xfer(p)         + &
@@ -309,8 +310,10 @@ contains
                            deadstemn_storage(p)  + &
                            deadstemn_xfer(p)     + &
                            retransn(p)
-              if ( (grassbioc > 0.0_r8) .and. (grassbioc < herbdens * cx)) then
-                grazed_totc(p) = s * herbdens * (grassbioc - vr)
+              write( iulog , * ) 'grass_c:', grassbioc , 'gC/m2 coszen',coszen(c), 'temp', t_veg10_day(p) - 273.15
+              write( iulog , * ) 'dgrz_c:', s * herbdens * (grassbioc - vr) , 'gC/m2/s ' , herbdens * cx
+              if ( s * herbdens * (grassbioc - vr) > 0.0_r8 ) then
+                grazed_totc(p) = min(s * herbdens * (grassbioc - vr), herbdens * cx)
                 mc = grazed_totc(p) / grassbioc
                 if (grassbion <= 0.0_r8) then
                   grasscn = leafcn(ivt(p))
@@ -321,6 +324,8 @@ contains
                   grazed_totn(p) = grazed_totc(p) / grasscn
                   mn = grazed_totn(p) / grassbion 
                 endif
+                write( iulog , * ) 'grass_n:', grassbion , 'gC/m2 grasscn', grasscn 
+                write( iulog , * ) 'dgrz_n:', grazed_totn(p)
                 ! just to make sure there are no crap values
                 mc = max(0.0_r8 , mc )
                 mn = max(0.0_r8 , mc )
@@ -329,6 +334,8 @@ contains
               end if
             end if
         end if
+        write( iulog , * ) 'grazed_c:', grazed_totc(p) , 'gC/m2'
+        write( iulog , * ) 'grazed_n:', grazed_totn(p) , 'gC/m2'
         ! set litter fractions
         cfrac2litr(p) = min(cfaecesfrac+curinefrac , 1.0_r8)
         nfrac2litr(p) = cfrac2litr(p) / grasscn
@@ -613,6 +620,18 @@ contains
         end do
      end do
    
+        do fc = 1,num_soilc
+           c = filter_soilc(fc)
+              if (col%active(c)) then
+                 ! total grazed biomass and losses
+                  grazed_totcc(c) = 0.0_r8
+                  grazed_clossc(c) = 0.0_r8
+                  grazed_totnc(c) = 0.0_r8
+                  grazed_nlossc(c) = 0.0_r8
+              end if
+        end do
+
+
      do pi = 1,maxsoil_patches
         do fc = 1,num_soilc
            c = filter_soilc(fc)
