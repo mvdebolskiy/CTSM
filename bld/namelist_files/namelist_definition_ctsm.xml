@@ -1018,6 +1018,11 @@ these software infrastructure tests obsolete.
 Toggle to turn on grazing model
 </entry>
 
+<entry id="grazing_efficiency" type="real" category="clm_physics"
+       group="clm_inparm" >
+Toggle to turn on grazing model
+</entry>
+
 <!-- ========================================================================================  -->
 <!-- Former CPP tokens -->
 <!-- ========================================================================================  -->

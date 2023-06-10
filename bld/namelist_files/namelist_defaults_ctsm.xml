@@ -2704,6 +2704,6 @@ use_crop=".true.">lnd/clm2/surfdata_map/ctsm5.1.dev052/landuse.timeseries_mpasa1
 <!-- =========================================  -->
 
 <use_grazing>.false.</use_grazing>
-
+<grazing_efficiency>1.0</grazing_efficiency>
 
 </namelist_defaults>

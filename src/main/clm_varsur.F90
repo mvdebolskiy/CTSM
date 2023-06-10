@@ -52,6 +52,8 @@ module clm_instur
   ! whether we have urban to initialize in each grid cell
   ! (second dimension goes 1:numurbl)
   real(r8), pointer :: pct_urban_max(:,:)
+
+  real(r8), pointer :: herbivore_density(:)
   !-----------------------------------------------------------------------
 
 end module clm_instur

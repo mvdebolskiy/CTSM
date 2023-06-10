@@ -109,7 +109,9 @@ contains
     ! !USES:
     use pftconMod
     use clm_varcon      , only : secspday, c_to_b
+    use clm_varctl      , only : grazing_efficiency
     use clm_time_manager, only : get_step_size_real, is_near_local_noon
+    use clm_instur,       only : herbivore_density
     !
     ! !ARGUMENTS:
     type(bounds_type)               , intent(in)    :: bounds
@@ -262,7 +264,7 @@ contains
       vr = 150.0_r8 * 1000 / 10000.0_r8 / c_to_b  ! convert from kg/ha biomass to gC/m2/sheep
       cx = 10.4_r8 / c_to_b * 1000.0_r8 / secspday ! convert from kg/day biomass to gC/sec per animal
       s  = 0.067 * 10000.0_r8 / secspday  ! convert from ha/day to m2/sec 
-      herbdens  = 10.0_r8 / 10000.0_r8           ! convert from animal/ha to animal/m2
+      !herbdens  = 10.0_r8 / 10000.0_r8           ! convert from animal/ha to animal/m2
       ch4_frac = 0.03_r8 ! ch4 output by grazers constant in C
       crherbfrac = 0.5_r8       ! fraction of herbivore respiration
       cfaecesfrac = 0.3_r8         ! fraction of feaces to litter
@@ -273,6 +275,8 @@ contains
         p = filter_soilp(fp)
         g = patch%gridcell(p)
         c = patch%column(p)
+        herbdens = herbivore_density(g) / 10000._r8 * grazing_efficiency
+        write(iulog, * ),'herbivore dencity   ', herbdens
         grassbioc = 0.0_r8
         grassbion = 0.0_r8
         grasscn   = 1.0_r8

@@ -283,6 +283,7 @@ contains
          use_nguardrail
 
     namelist /clm_inparm/ use_grazing
+    namelist /clm_inparm/ grazing_efficiency
 
     ! ----------------------------------------------------------------------
     ! Default values
@@ -788,7 +789,8 @@ contains
     call mpi_bcast (soil_layerstruct_predefined,len(soil_layerstruct_predefined), MPI_CHARACTER, 0, mpicom, ier)
     call mpi_bcast (soil_layerstruct_userdefined,size(soil_layerstruct_userdefined), MPI_REAL8, 0, mpicom, ier)
     call mpi_bcast (soil_layerstruct_userdefined_nlevsoi, 1, MPI_INTEGER, 0, mpicom, ier)
-
+    call mpi_bcast (grazing_efficiency, 1, MPI_REAL8,0, mpicom, ier)
+    call mpi_bcast (use_grazing, 1, MPI_LOGICAL,0, mpicom, ier)
     ! snow pack variables
     call mpi_bcast (nlevsno, 1, MPI_INTEGER, 0, mpicom, ier)
     call mpi_bcast (h2osno_max, 1, MPI_REAL8, 0, mpicom, ier)
@@ -872,6 +874,7 @@ contains
     write(iulog,*) '    use_cndv = ', use_cndv
     write(iulog,*) '    use_crop = ', use_crop
     write(iulog,*) '    use_grazing = ', use_grazing
+    write(iulog,*) '    grazing_efficiency = ', grazing_efficiency
     write(iulog,*) '    use_fertilizer = ', use_fertilizer
     write(iulog,*) '    use_grainproduct = ', use_grainproduct
     write(iulog,*) '    o3_veg_stress_method = ', o3_veg_stress_method

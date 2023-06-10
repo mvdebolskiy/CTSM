@@ -14,7 +14,7 @@ module surfrdMod
   use landunit_varcon , only : numurbl
   use clm_varcon      , only : grlnd
   use clm_varctl      , only : iulog
-  use clm_varctl      , only : use_cndv, use_crop, use_fates
+  use clm_varctl      , only : use_cndv, use_crop, use_fates, use_grazing
   use surfrdUtilsMod  , only : check_sums_equal_1, collapse_crop_types
   use surfrdUtilsMod  , only : collapse_to_dominant, collapse_crop_var, collapse_individual_lunits
   use ncdio_pio       , only : file_desc_t, var_desc_t, ncd_pio_openfile, ncd_pio_closefile
@@ -36,6 +36,7 @@ module surfrdMod
   private :: surfrd_veg_dgvm  ! Read vegetated landunits for DGVM mode
   private :: surfrd_pftformat ! Read crop pfts in file format where they are part of the vegetated land unit
   private :: surfrd_cftformat ! Read crop pfts in file format where they are on their own landunit
+  private :: surfrd_grazers   !
   !
   ! !PRIVATE DATA MEMBERS:
   character(len=*), parameter, private :: sourcefile = &
@@ -853,7 +854,9 @@ contains
     
     call collapse_to_dominant(wt_nat_patch(begg:endg,:), natpft_lb, natpft_ub, &
          begg, endg, n_dom_pfts)
-    
+    if(use_grazing) then
+      call surfrd_grazers(begg,endg,ncid,ns)
+    endif
   end subroutine surfrd_veg_all
 
   !-----------------------------------------------------------------------
@@ -990,4 +993,41 @@ contains
 
   end subroutine surfrd_urbanmask
   
+
+    subroutine surfrd_grazers(begg, endg, ncid, ns)
+  !
+  !
+    use clm_instur, only : herbivore_density
+
+    !
+    ! !ARGUMENTS:
+    integer, intent(in) :: begg, endg
+    type(file_desc_t),intent(inout) :: ncid   ! netcdf id
+    integer          ,intent(in)    :: ns     ! domain size
+
+    !local variables
+    integer  :: ier                            ! error status	
+    logical  :: readvar                        ! is variable on dataset
+    integer,pointer :: arrayl(:)               ! local array (needed because ncd_io expects a pointer)
+    character(len=32) :: subname = 'surfrd_grazers'  ! subroutine name
+
+     ! read tile mask
+
+    allocate(arrayl(begg:endg))
+    call ncd_io(ncid=ncid, varname='CONST_GRAZING', flag='read', data=arrayl, &
+         dim1name=grlnd, readvar=readvar)
+    if (.not. readvar) then
+       call endrun( msg=' ERROR: GRAZING not on surface data file'//errMsg(sourcefile, __LINE__))
+    else
+      herbivore_density(begg:endg) = arrayl(begg:endg)
+
+      deallocate(arrayl)
+    endif
+
+
+
+
+  end subroutine
+
+
 end module surfrdMod

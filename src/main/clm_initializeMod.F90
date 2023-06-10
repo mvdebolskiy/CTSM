@@ -134,6 +134,8 @@ contains
     use clm_varctl                    , only : finidat, finidat_interp_source, finidat_interp_dest, fsurdat
     use clm_varctl                    , only : use_cn, use_fates
     use clm_varctl                    , only : use_crop, ndep_from_cpl, fates_spitfire_mode
+    use clm_varctl                    , only : use_grazing
+    use clm_instur                    , only : herbivore_density
     use clm_varorb                    , only : eccen, mvelpp, lambm0, obliqr
     use landunit_varcon               , only : landunit_varcon_init, max_lunit, numurbl
     use pftconMod                     , only : pftcon
@@ -234,6 +236,9 @@ contains
     allocate (haslake      (begg:endg                      ))
     allocate (pct_urban_max(begg:endg, numurbl             ))
     allocate (wt_nat_patch (begg:endg, surfpft_lb:surfpft_ub ))
+    if(use_grazing) then
+      allocate (herbivore_density      (begg:endg))
+    endif
 
     ! Read list of Patches and their corresponding parameter values
     ! Independent of model resolution, Needs to stay before surfrd_get_data
