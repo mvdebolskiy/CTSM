@@ -210,19 +210,6 @@ contains
     enddo
     
 
-    do c = bounds%begc, bounds%endc
-       l = col%landunit(c)
-       if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
-          write(iulog, * ) 'graz_totc_col', this%grazed_totc_col(c)
-       end if
-    end do
-    do p = bounds%begp, bounds%endp
-       l = patch%landunit(l)
-       if (lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
-          write(iulog, * ) 'graz_totc_patch', this%grazed_totc_patch(p)
-       end if
-    end do
-
   end subroutine InitCold
 
   subroutine Restart(this, bounds)

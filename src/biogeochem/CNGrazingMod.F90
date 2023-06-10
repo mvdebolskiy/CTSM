@@ -262,8 +262,8 @@ contains
       dtime = get_step_size_real()
       ! valuse for Luo(2012)
       vr = 150.0_r8 * 1000 / 10000.0_r8 / c_to_b  ! convert from kg/ha biomass to gC/m2/sheep
-      cx = 10.4_r8 / c_to_b * 1000.0_r8 / secspday ! convert from kg/day biomass to gC/sec per animal
-      s  = 0.067 * 10000.0_r8 / secspday  ! convert from ha/day to m2/sec 
+      cx = 8.4_r8 / c_to_b * 1000.0_r8 / secspday ! convert from kg/day biomass to gC/sec per animal
+      s  = 0.067 / 6 * 10000.0_r8 / secspday  ! convert from ha/day to m2/sec 
       !herbdens  = 10.0_r8 / 10000.0_r8           ! convert from animal/ha to animal/m2
       ch4_frac = 0.03_r8 ! ch4 output by grazers constant in C
       crherbfrac = 0.5_r8       ! fraction of herbivore respiration
@@ -276,7 +276,6 @@ contains
         g = patch%gridcell(p)
         c = patch%column(p)
         herbdens = herbivore_density(g) / 10000._r8 * grazing_efficiency
-        write(iulog, * ),'herbivore dencity   ', herbdens
         grassbioc = 0.0_r8
         grassbion = 0.0_r8
         grasscn   = 1.0_r8
@@ -287,12 +286,9 @@ contains
         grazed_closs(p) = 0.0_r8
         grazed_nloss(p) = 0.0_r8
         if (any(grazed_pfts  == ivt(p))) then
-          write( iulog , * ) 'grz_check1'
           if ( coszen(c) > 0.0_r8 .and. t_veg10_day(p) >= 277.15_r8 ) then
             !get aboveground grazable biomass
-            write( iulog , * ) 'grz_check2'
             call get_curr_date(yr,mon,day,mcsec)
-            write( iulog , * ) 'grzdate ', yr,' ', mon,' ', day,' ', mcsec/3600 
               grassbioc =  leafc(p)              + &
                            leafc_storage(p)      + &
                            leafc_xfer(p)         + &
@@ -314,8 +310,6 @@ contains
                            deadstemn_storage(p)  + &
                            deadstemn_xfer(p)     + &
                            retransn(p)
-              write( iulog , * ) 'grass_c:', grassbioc , 'gC/m2 coszen',coszen(c), 'temp', t_veg10_day(p) - 273.15
-              write( iulog , * ) 'dgrz_c:', s * herbdens * (grassbioc - vr) , 'gC/m2/s ' , herbdens * cx
               if ( s * herbdens * (grassbioc - vr) > 0.0_r8 ) then
                 grazed_totc(p) = min(s * herbdens * (grassbioc - vr), herbdens * cx)
                 mc = grazed_totc(p) / grassbioc
@@ -328,8 +322,6 @@ contains
                   grazed_totn(p) = grazed_totc(p) / grasscn
                   mn = grazed_totn(p) / grassbion 
                 endif
-                write( iulog , * ) 'grass_n:', grassbion , 'gC/m2 grasscn', grasscn 
-                write( iulog , * ) 'dgrz_n:', grazed_totn(p)
                 ! just to make sure there are no crap values
                 mc = max(0.0_r8 , mc )
                 mn = max(0.0_r8 , mc )
@@ -338,8 +330,6 @@ contains
               end if
             end if
         end if
-        write( iulog , * ) 'grazed_c:', grazed_totc(p) , 'gC/m2'
-        write( iulog , * ) 'grazed_n:', grazed_totn(p) , 'gC/m2'
         ! set litter fractions
         cfrac2litr(p) = min(cfaecesfrac+curinefrac , 1.0_r8)
         nfrac2litr(p) = cfrac2litr(p) / grasscn
