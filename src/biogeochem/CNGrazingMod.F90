@@ -261,9 +261,9 @@ contains
 
       dtime = get_step_size_real()
       ! valuse for Luo(2012)
-      vr = 150.0_r8 * 1000 / 10000.0_r8 / c_to_b  ! convert from kg/ha biomass to gC/m2/sheep
-      cx = 8.4_r8 / c_to_b * 1000.0_r8 / secspday ! convert from kg/day biomass to gC/sec per animal
-      s  = 0.067 / 6 * 10000.0_r8 / secspday  ! convert from ha/day to m2/sec 
+      vr = 250.0_r8 * 1000 / 10000.0_r8 / c_to_b  ! convert from kg/ha biomass to gC/m2/sheep
+      cx = 10.4_r8 / c_to_b * 1000.0_r8 / secspday / 3._r8 ! convert from kg/day biomass to gC/sec per animal
+      s  = 0.067 / 2 * 10000.0_r8 / secspday  ! convert from ha/day to m2/sec 
       !herbdens  = 10.0_r8 / 10000.0_r8           ! convert from animal/ha to animal/m2
       ch4_frac = 0.03_r8 ! ch4 output by grazers constant in C
       crherbfrac = 0.5_r8       ! fraction of herbivore respiration
@@ -286,7 +286,7 @@ contains
         grazed_closs(p) = 0.0_r8
         grazed_nloss(p) = 0.0_r8
         if (any(grazed_pfts  == ivt(p))) then
-          if ( coszen(c) > 0.0_r8 .and. t_veg10_day(p) >= 277.15_r8 ) then
+          if ( coszen(c) > 0.0_r8 .and. t_veg10_day(p) >= 276.15_r8 ) then
             !get aboveground grazable biomass
             call get_curr_date(yr,mon,day,mcsec)
               grassbioc =  leafc(p)              + &
