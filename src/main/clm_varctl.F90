@@ -271,6 +271,12 @@ module clm_varctl
   character(len=256), public :: fates_inventory_ctrl_filename = ''     ! filename for inventory control
 
   !----------------------------------------------------------
+  !  Bigleaf grazing flags
+  !----------------------------------------------------------
+
+  logical, public :: use_grazing = .false.            ! true => use grazing
+
+  !----------------------------------------------------------
   !  LUNA switches		
   !----------------------------------------------------------
 

@@ -232,6 +232,9 @@ contains
           fates_parteh_mode,                            &
           use_fates_tree_damage
 
+    ! Bigleaf grazing flags
+    namelist /clm_grazing/ use_grazing
+
    ! Ozone vegetation stress method
    namelist / clm_inparam / o3_veg_stress_method
 
@@ -742,6 +745,8 @@ contains
     call mpi_bcast (use_hydrstress, 1, MPI_LOGICAL, 0, mpicom, ier)
 
     call mpi_bcast (use_dynroot, 1, MPI_LOGICAL, 0, mpicom, ier)
+    
+    call mpi_bcast (use_grazing, 1, MPI_LOGICAL,0, mpicom, ier)
 
     if (use_cn ) then
        ! vertical soil mixing variables
@@ -1060,6 +1065,8 @@ contains
        write(iulog, *) '    use_fates_sp = ', use_fates_sp
        write(iulog, *) '    fates_inventory_ctrl_filename = ',fates_inventory_ctrl_filename
     end if
+
+    write(iulog,*) '    use_grazing = ', use_grazing
   end subroutine control_print
 
 

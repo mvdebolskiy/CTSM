@@ -1788,6 +1788,11 @@ sub process_namelist_inline_logic {
   # namelist group: clm_initinterp_inparm #
   #########################################
   setup_logic_initinterp($opts, $nl_flags, $definition, $defaults, $nl);
+
+  #########################################
+  # namelist group: clm_initinterp_inparm #
+  #########################################
+  setup_logic_initinterp($opts, $nl_flags, $definition, $defaults, $nl);
 }
 
 #-------------------------------------------------------------------------------
@@ -4254,6 +4259,22 @@ sub setup_logic_fates {
     }
 }
 
+sub setup_logic_grazing {
+   #
+   # Options related to init_interp
+   #
+   my ($opts, $nl_flags, $definition, $defaults, $nl) = @_;
+
+  add_default($opts, $nl_flags->{'inputdata_rootdir'}, $definition, $defaults, $nl, 'use_grazing' );
+  if (&value_is_true( $nl_flags->{'use_fates'})  ) {
+    $log->fatal_error('use_grazing can not be true when fates is on');
+  }
+
+}
+
+#-------------------------------------------------------------------------------
+
+
 #-------------------------------------------------------------------------------
 
 sub setup_logic_misc {
@@ -4305,7 +4326,7 @@ sub write_output_files {
                soil_resis_inparm  bgc_shared canopyfluxes_inparm aerosol
                clmu_inparm clm_soilstate_inparm clm_nitrogen clm_snowhydrology_inparm
                cnprecision_inparm clm_glacier_behavior crop irrigation_inparm
-               surfacealbedo_inparm water_tracers_inparm);
+               surfacealbedo_inparm water_tracers_inparm clm_grazing);
 
   #@groups = qw(clm_inparm clm_canopyhydrology_inparm clm_soilhydrology_inparm
   #             finidat_consistency_checks dynpft_consistency_checks);
