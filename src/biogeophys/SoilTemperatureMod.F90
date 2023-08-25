@@ -5,6 +5,7 @@ module SoilTemperatureMod
   !-----------------------------------------------------------------------
   ! !DESCRIPTION:
   ! Calculates snow and soil temperatures including phase change
+  ! test commit 
   !
   ! !USES:
   use shr_kind_mod            , only : r8 => shr_kind_r8
