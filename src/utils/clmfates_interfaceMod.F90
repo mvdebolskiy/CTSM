@@ -1054,7 +1054,7 @@ module CLMFatesInterfaceMod
 
             call ed_update_site(this%fates(nc)%sites(s), &
                   this%fates(nc)%bc_in(s), &
-                  this%fates(nc)%bc_out(s), 1)
+                  this%fates(nc)%bc_out(s))
       enddo
 
 
@@ -1707,7 +1707,6 @@ module CLMFatesInterfaceMod
 
                ! I think ed_update_site and update_hlmfates_dyn are doing some similar
                ! update type stuff, should consolidate (rgk 11-2016)
-               write(iulog,*) 'CHECKPOINT1'
                do s = 1,this%fates(nc)%nsites
 
                   c = this%f2hmap(nc)%fcolumn(s)
@@ -1716,8 +1715,8 @@ module CLMFatesInterfaceMod
                        min(this%fates(nc)%bc_in(s)%nlevsoil, active_layer_inst%altmax_lastyear_indx_col(c))
 
                   call ed_update_site( this%fates(nc)%sites(s), &
-                       this%fates(nc)%bc_in(s), &
-                        this%fates(nc)%bc_out(s) , 0)
+                        this%fates(nc)%bc_in(s), &
+                        this%fates(nc)%bc_out(s) )
 
                end do
 
@@ -1941,7 +1940,7 @@ module CLMFatesInterfaceMod
 
               call ed_update_site(this%fates(nc)%sites(s), &
                     this%fates(nc)%bc_in(s), &
-                    this%fates(nc)%bc_out(s) , 2 )
+                    this%fates(nc)%bc_out(s))
 
            end do
 
