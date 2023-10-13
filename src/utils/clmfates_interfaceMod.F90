@@ -1054,7 +1054,7 @@ module CLMFatesInterfaceMod
 
             call ed_update_site(this%fates(nc)%sites(s), &
                   this%fates(nc)%bc_in(s), &
-                  this%fates(nc)%bc_out(s))
+                  this%fates(nc)%bc_out(s), 2 )
       enddo
 
 
@@ -1716,7 +1716,7 @@ module CLMFatesInterfaceMod
 
                   call ed_update_site( this%fates(nc)%sites(s), &
                         this%fates(nc)%bc_in(s), &
-                        this%fates(nc)%bc_out(s) )
+                        this%fates(nc)%bc_out(s) , 1)
 
                end do
 
@@ -1937,20 +1937,21 @@ module CLMFatesInterfaceMod
               ! time-step loop. Therefore, we just initialize fluxes
               ! into the litter pool in a trivial way prior to timestepping
               this%fates(nc)%bc_in(s)%max_rooting_depth_index_col = this%fates(nc)%bc_in(s)%nlevsoil
-
-              call ed_update_site(this%fates(nc)%sites(s), &
-                    this%fates(nc)%bc_in(s), &
-                    this%fates(nc)%bc_out(s))
-
+              if(.not. is_first_restart_step()) then
+                  call ed_update_site(this%fates(nc)%sites(s), &
+                       this%fates(nc)%bc_in(s), &
+                       this%fates(nc)%bc_out(s), 0)
+              endif
            end do
 
            ! ------------------------------------------------------------------------
            ! Update diagnostics of FATES ecosystem structure used in HLM.
            ! ------------------------------------------------------------------------
-           call this%wrap_update_hlmfates_dyn(nc,bounds_clump, &
-                waterdiagnosticbulk_inst,canopystate_inst, &
-                soilbiogeochem_carbonflux_inst, .false.)
-
+           if(.not. is_first_restart_step()) then
+              call this%wrap_update_hlmfates_dyn(nc,bounds_clump, &
+                   waterdiagnosticbulk_inst,canopystate_inst, &
+                   soilbiogeochem_carbonflux_inst, .false.)
+           endif
            ! ------------------------------------------------------------------------
            ! Update history IO fields that depend on ecosystem dynamics
            ! ------------------------------------------------------------------------
