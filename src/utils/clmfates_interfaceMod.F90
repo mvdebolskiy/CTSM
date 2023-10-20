@@ -1816,6 +1816,7 @@ module CLMFatesInterfaceMod
         canopystate_inst, soilstate_inst, soilbiogeochem_carbonflux_inst)
 
 
+      use abortutils        , only : endrun
      ! Arguments
      class(hlm_fates_interface_type), intent(inout) :: this
      type(waterstatebulk_type)          , intent(inout) :: waterstatebulk_inst
@@ -1845,6 +1846,10 @@ module CLMFatesInterfaceMod
      call GetAndSetTime
 
      nclumps = get_proc_clumps()
+
+      if (is_restart()) then 
+        call endrun(msg=errMsg(sourcefile, __LINE__))
+      end if
 
      !$OMP PARALLEL DO PRIVATE (nc,bounds_clump,s,c,j,vol_ice,eff_porosity)
      do nc = 1, nclumps
