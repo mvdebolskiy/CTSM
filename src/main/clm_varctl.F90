@@ -336,6 +336,8 @@ module clm_varctl
   !----------------------------------------------------------
   logical, public :: use_excess_ice = .false. ! true. => use excess ice physics
 
+  logical, public :: use_ekici = .false. ! .true. => use ekici parametrization for micro_sigma
+
   !----------------------------------------------------------
   ! plant hydraulic stress switch
   !----------------------------------------------------------

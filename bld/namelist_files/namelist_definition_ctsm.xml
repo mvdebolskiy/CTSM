@@ -2881,5 +2881,10 @@ Mapping method from excess ice input stream data to the model resolution
     none     = no interpolation
 </entry>
 
+<entry id="use_ekici" type="logical" category="clm_physics"
+        group="clm_inparm" valid_values="" >
+If TRUE turn on micro_sigma updates with subsidence, (Ekici et al., 2019)
+</entry>
+
 
 </namelist_definition>
