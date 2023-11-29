@@ -13,7 +13,7 @@ module WaterStateType
   use abortutils     , only : endrun
   use decompMod      , only : bounds_type
   use decompMod      , only : subgrid_level_patch, subgrid_level_column, subgrid_level_gridcell
-  use clm_varctl     , only : use_bedrock, use_excess_ice, iulog
+  use clm_varctl     , only : use_bedrock, use_excess_ice, use_ekici, iulog
   use spmdMod        , only : masterproc
   use clm_varctl     , only : use_fates
   use clm_varpar     , only : nlevgrnd, nlevsoi, nlevurb, nlevmaxurbgrnd, nlevsno   
@@ -55,6 +55,8 @@ module WaterStateType
 
      real(r8), pointer :: excess_ice_col         (:,:)  ! col excess ice (kg/m2) (new) (-nlevsno+1:nlevgrnd)
      real(r8), pointer :: exice_bulk_init        (:)    ! inital value for excess ice (new) (unitless)
+     real(r8), pointer :: exice_acc_subs         (:)    ! accumulated subsidence from excess ice
+     real(r8), pointer :: exice_micro_s          (:)    ! micro sigma due to subsidence
 
      type(excessicestream_type), private :: exicestream ! stream type for excess ice initialization NUOPC only
 
@@ -164,6 +166,12 @@ contains
          bounds = bounds, subgrid_level = subgrid_level_column, &
          dim2beg = -nlevsno+1, dim2end = nlevmaxurbgrnd)
     call AllocateVar1d(var = this%exice_bulk_init, name = 'exice_bulk_init', &
+         container = tracer_vars, &
+         bounds = bounds, subgrid_level = subgrid_level_column)
+    call AllocateVar1d(var = this%exice_acc_subs, name = 'exice_acc_subs', &
+         container = tracer_vars, &
+         bounds = bounds, subgrid_level = subgrid_level_column)
+    call AllocateVar1d(var = this%exice_micro_s, name = 'exice_micro_s', &
          container = tracer_vars, &
          bounds = bounds, subgrid_level = subgrid_level_column)
 
@@ -291,7 +299,11 @@ contains
        call hist_addfld2d (fname='EXCESS_ICE',  units='kg/m2', type2d='levsoi', &
            avgflag='A', long_name='excess soil ice (vegetated landunits only)', &
            ptr_col=this%excess_ice_col, l2g_scale_type='veg', default = 'inactive')
-    end if
+    end if 
+    if (use_ekici) then
+
+    endif
+
 
     ! (rgk 02-02-2017) There is intentionally no entry  here for stored plant water
     !                  I think that since the value is zero in all cases except
