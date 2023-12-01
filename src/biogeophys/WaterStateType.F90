@@ -301,7 +301,11 @@ contains
            ptr_col=this%excess_ice_col, l2g_scale_type='veg', default = 'inactive')
     end if 
     if (use_ekici) then
-
+       this%exice_micro_s(begc:endc) = 0.0_r8
+       call hist_addfld1d (fname=this%info%fname('MICRO_SIGMA_EKICI'),  units='unitless',  &
+            avgflag='A', &
+            long_name=this%info%lname('std of micro topography due to Ekici et al., 2020 parameterization'), &
+            ptr_col=this%exice_micro_s, l2g_scale_type='veg')
     endif
 
 
@@ -592,6 +596,11 @@ contains
          this%excess_ice_col(bounds%begc:bounds%endc,-nlevsno+1:nlevmaxurbgrnd)=0.0_r8
          this%exice_bulk_init(bounds%begc:bounds%endc)=0.0_r8
       end if
+
+
+      this%exice_micro_s(bounds%begc:bounds%endc)=0.0_r8
+      this%exice_acc_subs(bounds%begc:bounds%endc)=0.0_r8
+
     end associate
 
   end subroutine InitCold
@@ -776,6 +785,25 @@ contains
           end do ! end of column loop
        endif! end of old file restart
     endif ! end of exice restart
+
+    if (.not. use_ekici) then
+       this%exice_micro_s(bounds%begc:bounds%endc)=0.0_r8
+    else
+      call restartvar(ncid=ncid, flag=flag, varname=this%info%fname('MICRO_SIGMA_EKICI'), xtype=ncd_double,  &
+            dim1name='column', &
+            long_name=this%info%lname('std of micro topography due to Ekici et al., 2020 parameterization'), &
+            units='unitless', &
+            interpinic_flag='interp', readvar=readvar, data=this%exice_micro_s)
+      call restartvar(ncid=ncid, flag=flag, varname=this%info%fname('EXICE_ACC_SUBS'), xtype=ncd_double,  &
+            dim1name='column', &
+            long_name=this%info%lname('accumulated subsidence due to Ekici et al., 2020 parameterization'), &
+            units='unitless', &
+            interpinic_flag='interp', readvar=readvar, data=this%exice_acc_subs)
+       if (flag == 'read' .and. (.not. readvar) ) then ! when reading restart that does not have excess ice in it
+           this%exice_micro_s(bounds%begc:bounds%endc)=0.0_r8
+           this%exice_acc_subs(bounds%begc:bounds%endc)=0.0_r8
+       end if
+    end if 
 
     ! Determine volumetric soil water (for read only)
     if (flag == 'read' ) then

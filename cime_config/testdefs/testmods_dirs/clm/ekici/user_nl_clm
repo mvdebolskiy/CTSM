@@ -1,1 +1,3 @@
-use_ekici = .true.
+ use_ekici = .true.
+
+ hist_fincl1 += 'MICRO_SIGMA_EKICI'  

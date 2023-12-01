@@ -2191,6 +2191,7 @@ sub setup_logic_soilstate {
   add_default($opts, $nl_flags->{'inputdata_rootdir'}, $definition, $defaults, $nl, 'use_bedrock',
               'use_fates'=>$nl_flags->{'use_fates'}, 'vichydro'=>$nl_flags->{'vichydro'} );
   add_default($opts, $nl_flags->{'inputdata_rootdir'}, $definition, $defaults, $nl, 'use_excess_ice'); # excess ice flag should be read before stream vars
+  add_default($opts, $nl_flags->{'inputdata_rootdir'}, $definition, $defaults, $nl, 'use_ekici');
 
   my $var1 = "soil_layerstruct_predefined";
   my $var2 = "soil_layerstruct_userdefined";
@@ -4363,9 +4364,8 @@ sub setup_logic_exice {
        }
      }
   }
-  #add_default($opts, $nl_flags->{'inputdata_rootdir'}, $definition, $defaults, $nl, 'use_ekici');
-  my $use_ekici = $nl->get_value( 'use_ekici' );
-  if( ( not value_is_true($use_exice) ) && value_is_true($use_ekici)) {
+  my $use_ekic = $nl->get_value( 'use_ekici' );
+  if( ( not value_is_true($use_exice) ) && value_is_true($use_ekic)) {
      $log->fatal_error("use_excess_ice=.true. is required when use_ekici is set to true" );
   }
 

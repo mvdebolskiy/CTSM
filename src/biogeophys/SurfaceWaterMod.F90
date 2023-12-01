@@ -116,7 +116,8 @@ contains
          b_waterstate_inst      => water_inst%waterstatebulk_inst, &
          b_waterflux_inst       => water_inst%waterfluxbulk_inst, &
          b_waterdiagnostic_inst => water_inst%waterdiagnosticbulk_inst, &
-         exice_acc_subs         => water_inst%waterstatebulk_inst%exice_acc_subs &
+         exice_acc_subs         => water_inst%waterstatebulk_inst%exice_acc_subs, &
+         exice_micro_s          => water_inst%waterstatebulk_inst%exice_micro_s &
          )
 
     dtime = get_step_size_real()
@@ -142,6 +143,7 @@ contains
               micro_sigma_sub(c) = max(0.0001_r8,col%micro_sigma(c) + exice_acc_subs(c)/10._r8)
           end if
         end if
+        exice_micro_s(c)=micro_sigma_sub(c)
       end do
     endif
 

@@ -113,7 +113,7 @@ contains
     !
     ! !USES:
     use clm_time_manager         , only : get_step_size_real
-    use clm_varpar               , only : nlevsno, nlevgrnd, nlevurb, nlevmaxurbgrnd
+    use clm_varpar               , only : nlevsno, nlevgrnd, nlevurb, nlevmaxurbgrnd, nlevsoi
     use clm_varctl               , only : iulog, use_excess_ice
     use clm_varcon               , only : cnfac, cpice, cpliq, denh2o, denice
     use landunit_varcon          , only : istsoil, istcrop
@@ -200,6 +200,8 @@ contains
          h2osfc                  => waterstatebulk_inst%h2osfc_col                   , & ! Input:  [real(r8) (:)   ]  surface water (mm)                      
          excess_ice              => waterstatebulk_inst%excess_ice_col               , & ! Input:  [real(r8) (:,:) ]  excess ice (kg/m2) (new) (1:nlevgrnd)
          frac_h2osfc             => waterdiagnosticbulk_inst%frac_h2osfc_col         , & ! Input:  [real(r8) (:)   ]  fraction of ground covered by surface water (0 to 1)
+         exice_acc_subs          => waterstatebulk_inst%exice_acc_subs               , &
+         exice_subs_col          => waterdiagnosticbulk_inst%exice_subs_col          , &
 
          
          sabg_soil               => solarabs_inst%sabg_soil_patch           , & ! Input:  [real(r8) (:)   ]  solar radiation absorbed by soil (W/m**2)
@@ -587,6 +589,14 @@ contains
             end if
 
          end do
+      end do
+
+      do fc = 1,num_nolakec
+         c = filter_nolakec(fc)
+         l = col%landunit(c)
+            if(lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
+               exice_acc_subs(c)=exice_acc_subs(c)+sum(exice_subs_col(c,1:nlevsoi))
+            end if
       end do
 
     end associate

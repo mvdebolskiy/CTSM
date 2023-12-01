@@ -246,7 +246,7 @@ contains
 
     namelist /clm_inparm/ use_excess_ice
 
-    namelist /clm_inparam/ use_ekici
+    namelist /clm_inparm/ use_ekici
 
     namelist /clm_inparm/ use_lai_streams
 
