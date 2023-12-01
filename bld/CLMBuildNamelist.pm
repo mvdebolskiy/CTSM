@@ -4363,7 +4363,7 @@ sub setup_logic_exice {
        }
      }
   }
-  add_default($opts, $nl_flags->{'inputdata_rootdir'}, $definition, $defaults, $nl, 'use_ekici');
+  #add_default($opts, $nl_flags->{'inputdata_rootdir'}, $definition, $defaults, $nl, 'use_ekici');
   my $use_ekici = $nl->get_value( 'use_ekici' );
   if( ( not value_is_true($use_exice) ) && value_is_true($use_ekici)) {
      $log->fatal_error("use_excess_ice=.true. is required when use_ekici is set to true" );

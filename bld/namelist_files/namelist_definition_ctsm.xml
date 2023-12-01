@@ -2882,7 +2882,7 @@ Mapping method from excess ice input stream data to the model resolution
 </entry>
 
 <entry id="use_ekici" type="logical" category="clm_physics"
-        group="clm_inparm" valid_values="" >
+        group="clm_inparam" valid_values="" >
 If TRUE turn on micro_sigma updates with subsidence, (Ekici et al., 2019)
 </entry>
 
