@@ -89,6 +89,11 @@ contains
     !
     ! Note that this just operates over soil points: special landunits have frac_h2osfc fixed at 0
     !
+    ! !USES:
+    use clm_varctl,       only: use_ekici
+    use landunit_varcon,  only: istcrop, istsoil
+    use LandunitType ,    only: lun
+    use ColumnType,       only: col
     ! !ARGUMENTS:
     type(bounds_type)              , intent(in)    :: bounds
     integer                        , intent(in)    :: num_soilc       ! number of points in soilc filter
@@ -96,9 +101,10 @@ contains
     type(water_type)               , intent(inout) :: water_inst
     !
     ! !LOCAL VARIABLES:
-    integer  :: i
+    integer  :: i,c,l
     real(r8) :: dtime ! land model time step (sec)
     real(r8) :: h2osno_total(bounds%begc:bounds%endc) ! total snow water (mm H2O)
+    real(r8) :: micro_sigma_sub(bounds%begc:bounds%endc) ! adjusted micro_sigma due to subsidence
 
     character(len=*), parameter :: subname = 'UpdateFracH2oSfc'
     !-----------------------------------------------------------------------
@@ -109,7 +115,8 @@ contains
 
          b_waterstate_inst      => water_inst%waterstatebulk_inst, &
          b_waterflux_inst       => water_inst%waterfluxbulk_inst, &
-         b_waterdiagnostic_inst => water_inst%waterdiagnosticbulk_inst &
+         b_waterdiagnostic_inst => water_inst%waterdiagnosticbulk_inst, &
+         exice_acc_subs         => water_inst%waterstatebulk_inst%exice_acc_subs &
          )
 
     dtime = get_step_size_real()
@@ -124,10 +131,25 @@ contains
          caller = 'UpdateFracH2oSfc', &
          h2osno_total = h2osno_total(bounds%begc:bounds%endc))
 
+    micro_sigma_sub = col%micro_sigma(begc:endc)
+    if (use_ekici) then
+      do c = begc,endc
+        l = col%landunit(c)
+        if(lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
+          if (exice_acc_subs(c)<0.5) then
+              micro_sigma_sub(c) = max(0.0001_r8,col%micro_sigma(c) - exice_acc_subs(c)/10._r8)
+          else
+              micro_sigma_sub(c) = max(0.0001_r8,col%micro_sigma(c) + exice_acc_subs(c)/10._r8)
+          end if
+        end if
+      end do
+    endif
+
+
     call BulkDiag_FracH2oSfc(bounds, num_soilc, filter_soilc, &
          ! Inputs
          dtime                         = dtime, &
-         micro_sigma                   = col%micro_sigma(begc:endc), &
+         micro_sigma                   = micro_sigma_sub, &
          h2osno_total                  = h2osno_total(begc:endc), &
          h2osfc                        = b_waterstate_inst%h2osfc_col(begc:endc), &
          ! Outputs
