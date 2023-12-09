@@ -306,6 +306,11 @@ contains
             avgflag='A', &
             long_name=this%info%lname('std of micro topography due to Ekici et al., 2020 parameterization'), &
             ptr_col=this%exice_micro_s, l2g_scale_type='veg')
+       this%exice_acc_subs(begc:endc) = 0.0_r8
+       call hist_addfld1d (fname=this%info%fname('EXICE_SUBS_ACC'),  units='m',  &
+            avgflag='A', &
+            long_name=this%info%lname('accum subsidence'), &
+            ptr_col=this%exice_acc_subs, l2g_scale_type='veg')
     endif
 
 
@@ -788,6 +793,7 @@ contains
 
     if (.not. use_ekici) then
        this%exice_micro_s(bounds%begc:bounds%endc)=0.0_r8
+       this%exice_acc_subs(bounds%begc:bounds%endc)=0.0_r8
     else
       call restartvar(ncid=ncid, flag=flag, varname=this%info%fname('MICRO_SIGMA_EKICI'), xtype=ncd_double,  &
             dim1name='column', &
@@ -797,7 +803,7 @@ contains
       call restartvar(ncid=ncid, flag=flag, varname=this%info%fname('EXICE_ACC_SUBS'), xtype=ncd_double,  &
             dim1name='column', &
             long_name=this%info%lname('accumulated subsidence due to Ekici et al., 2020 parameterization'), &
-            units='unitless', &
+            units='m', &
             interpinic_flag='interp', readvar=readvar, data=this%exice_acc_subs)
        if (flag == 'read' .and. (.not. readvar) ) then ! when reading restart that does not have excess ice in it
            this%exice_micro_s(bounds%begc:bounds%endc)=0.0_r8

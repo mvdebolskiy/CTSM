@@ -114,7 +114,7 @@ contains
     ! !USES:
     use clm_time_manager         , only : get_step_size_real
     use clm_varpar               , only : nlevsno, nlevgrnd, nlevurb, nlevmaxurbgrnd, nlevsoi
-    use clm_varctl               , only : iulog, use_excess_ice
+    use clm_varctl               , only : iulog, use_excess_ice, use_ekici
     use clm_varcon               , only : cnfac, cpice, cpliq, denh2o, denice
     use landunit_varcon          , only : istsoil, istcrop
     use column_varcon            , only : icol_roof, icol_sunwall, icol_shadewall, icol_road_perv, icol_road_imperv
@@ -174,6 +174,9 @@ contains
     real(r8) :: dz_0(bounds%begc:bounds%endc,-nlevsno+1:nlevmaxurbgrnd)                ! original layer thickness [m] 
     real(r8) :: z_0(bounds%begc:bounds%endc,-nlevsno+1:nlevmaxurbgrnd)                 ! original layer depth [m]
     real(r8) :: zi_0(bounds%begc:bounds%endc,-nlevsno+0:nlevmaxurbgrnd)                ! original layer interface level bellow layer "z" [m]
+    real(r8), parameter :: slopebeta          = 3._r8
+    real(r8), parameter :: slopemax           = 0.4_r8
+    real(r8), parameter :: slope0             = slopemax**(-1._r8/slopebeta)
 
     !-----------------------------------------------------------------------
 
@@ -202,6 +205,7 @@ contains
          frac_h2osfc             => waterdiagnosticbulk_inst%frac_h2osfc_col         , & ! Input:  [real(r8) (:)   ]  fraction of ground covered by surface water (0 to 1)
          exice_acc_subs          => waterstatebulk_inst%exice_acc_subs               , &
          exice_subs_col          => waterdiagnosticbulk_inst%exice_subs_col          , &
+         exice_micro_s           => waterstatebulk_inst%exice_micro_s                , &
 
          
          sabg_soil               => solarabs_inst%sabg_soil_patch           , & ! Input:  [real(r8) (:)   ]  solar radiation absorbed by soil (W/m**2)
@@ -595,8 +599,19 @@ contains
          c = filter_nolakec(fc)
          l = col%landunit(c)
             if(lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
-               exice_acc_subs(c)=exice_acc_subs(c)+sum(exice_subs_col(c,1:nlevsoi))
+               if (use_ekici) then
+                  exice_acc_subs(c)=exice_acc_subs(c)+sum(exice_subs_col(c,1:nlevsoi))
+
+                  if (exice_acc_subs(c)<0.5) then
+                     col%micro_sigma(c) = max(0.0001_r8,(col%topo_slope(c) + slope0)**(- slopebeta) - exice_acc_subs(c)/10._r8)
+                  else
+                     col%micro_sigma(c) = max(0.0001_r8,(col%topo_slope(c) + slope0)**(- slopebeta) + exice_acc_subs(c)/10._r8)
+                  end if
+               end if
+            else
+               exice_acc_subs(c)=0.0_r8
             end if
+            exice_micro_s(c)=col%micro_sigma(c)
       end do
 
     end associate

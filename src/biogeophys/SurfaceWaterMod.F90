@@ -115,9 +115,7 @@ contains
 
          b_waterstate_inst      => water_inst%waterstatebulk_inst, &
          b_waterflux_inst       => water_inst%waterfluxbulk_inst, &
-         b_waterdiagnostic_inst => water_inst%waterdiagnosticbulk_inst, &
-         exice_acc_subs         => water_inst%waterstatebulk_inst%exice_acc_subs, &
-         exice_micro_s          => water_inst%waterstatebulk_inst%exice_micro_s &
+         b_waterdiagnostic_inst => water_inst%waterdiagnosticbulk_inst &
          )
 
     dtime = get_step_size_real()
@@ -132,26 +130,11 @@ contains
          caller = 'UpdateFracH2oSfc', &
          h2osno_total = h2osno_total(bounds%begc:bounds%endc))
 
-    micro_sigma_sub = col%micro_sigma(begc:endc)
-    if (use_ekici) then
-      do c = begc,endc
-        l = col%landunit(c)
-        if(lun%itype(l) == istsoil .or. lun%itype(l) == istcrop) then
-          if (exice_acc_subs(c)<0.5) then
-              micro_sigma_sub(c) = max(0.0001_r8,col%micro_sigma(c) - exice_acc_subs(c)/10._r8)
-          else
-              micro_sigma_sub(c) = max(0.0001_r8,col%micro_sigma(c) + exice_acc_subs(c)/10._r8)
-          end if
-        end if
-        exice_micro_s(c)=micro_sigma_sub(c)
-      end do
-    endif
-
 
     call BulkDiag_FracH2oSfc(bounds, num_soilc, filter_soilc, &
          ! Inputs
          dtime                         = dtime, &
-         micro_sigma                   = micro_sigma_sub, &
+         micro_sigma                   = col%micro_sigma, &
          h2osno_total                  = h2osno_total(begc:endc), &
          h2osfc                        = b_waterstate_inst%h2osfc_col(begc:endc), &
          ! Outputs
