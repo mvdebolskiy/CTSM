@@ -1,5 +1,5 @@
 [submodule "fates"]
-ypath = src/fates
+path = src/fates
 url = https://github.com/NGEET/fates
 fxtag = sci.1.73.0_api.35.0.0
 fxrequired = AlwaysRequired
