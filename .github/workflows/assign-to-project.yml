@@ -11,7 +11,7 @@ jobs:
     name: Add pull request to project 25
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@RELEASE_VERSION
+      - uses: actions/add-to-project@v1.0.2
         with:
           project-url: https://github.com/users/mvdebolskiy/projects/1
           github-token: ${{ secrets.MY_GITHUB_TOKEN }}
