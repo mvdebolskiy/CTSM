@@ -6,6 +6,9 @@ on:
   pull_request:
     types: [opened, labeled]
 
+env: 
+  GITHUB_TOKEN: ${{ secrets.TOKEN }}
+  
 jobs:
   assign_high_priority:
     runs-on: ubuntu-latest
@@ -15,5 +18,4 @@ jobs:
       uses: srggrs/assign-one-project-github-action@1.3.1
       with:
         project: 'https://github.com/users/mvdebolskiy/projects/1'
-      env: 
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
