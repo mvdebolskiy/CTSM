@@ -31,6 +31,7 @@ module VOCEmissionMod
   use TemperatureType    , only : temperature_type
   use PatchType          , only : patch                
   use EnergyFluxType     , only : energyflux_type
+  use decompMod          , only : subgrid_level_patch
   !
   implicit none
   private 
@@ -600,6 +601,10 @@ contains
              ! Activity factor for CO2 (only for isoprene)
              if (trim(meg_cmp%name) == 'isoprene') then 
                 co2_ppmv = 1.e6_r8*forc_pco2(g)/forc_pbot(c)
+                if (cisha_z(p,1) < 0.0_r8 .or. cisun_z(p,1) < 0.0_r8) then
+                   write(iulog,*) 'Invalid intercellular co2 pressure (patch itype, sunlit, shaded): ', patch%itype(p),cisun_z(p,1),cisha_z(p,1)
+                   call endrun(subgrid_index=p, subgrid_level=subgrid_level_patch, msg=errMsg(sourcefile, __LINE__))
+                endif
                 gamma_c = get_gamma_C(cisun_z(p,1),cisha_z(p,1),forc_pbot(c),fsun(p), co2_ppmv)
              else
                 gamma_c = 1._r8
