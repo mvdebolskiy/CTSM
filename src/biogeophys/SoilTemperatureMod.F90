@@ -1439,9 +1439,9 @@ contains
                      if (xm(c,j) > 0._r8) then !if there is excess heat to melt the ice
                         h2osoi_ice(c,j) = max(0._r8, wice0(c,j)-xm(c,j))
                         heatr = hm(c,j) - hfus*(wice0(c,j)-h2osoi_ice(c,j))/dtime
-                        xm2(c,j) = xm(c,j) - h2osoi_ice(c,j) !excess ice melting
-                        if (h2osoi_ice(c,j) == 0._r8) then ! this might be redundant 
-                           if (excess_ice(c,j) >= 0._r8 .and. xm2(c,j)>0._r8 .and. j>=2) then ! if there is excess ice to melt
+                        xm2(c,j) = xm(c,j) - wice0(c,j) !excess ice melting
+                        if (h2osoi_ice(c,j) == 0._r8) then ! all soil ice have melted
+                           if (excess_ice(c,j) > 0._r8 .and. xm2(c,j)>0._r8 .and. j>=2) then ! if there is excess ice to melt
                               excess_ice(c,j) = max(0._r8,wexice0(c,j) - xm2(c,j))
                               heatr = hm(c,j) - hfus * (wexice0(c,j)-excess_ice(c,j)+wice0(c,j)-h2osoi_ice(c,j)) / dtime
                            endif

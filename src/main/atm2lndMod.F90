@@ -22,7 +22,7 @@ module atm2lndMod
   use filterColMod   , only : filter_col_type
   use LandunitType   , only : lun                
   use ColumnType     , only : col
-  use landunit_varcon, only : istice
+  use landunit_varcon, only : istice,istsoil,istcrop
   use WaterType      , only : water_type
   use Wateratm2lndBulkType, only : wateratm2lndbulk_type
 
@@ -178,10 +178,14 @@ contains
          )
       
       ! Initialize column forcing (needs to be done for ALL active columns)
+      do g = bounds%begg,bounds%endg
+            forc_t_g(g)     = forc_t_g(g)+50._r8
+            forc_th_g(g)    = forc_th_g(g)+50._r8
+      enddo
       do c = bounds%begc,bounds%endc
          if (col%active(c)) then
             g = col%gridcell(c)
-
+            l = col%landunit(c)
             forc_rain_c(c)  = forc_rain_g(g)
             forc_snow_c(c)  = forc_snow_g(g)
             forc_t_c(c)     = forc_t_g(g)

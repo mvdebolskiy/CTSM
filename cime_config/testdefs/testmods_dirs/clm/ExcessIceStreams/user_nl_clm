@@ -1,2 +1,7 @@
  use_excess_ice = .true.
- use_excess_ice_streams = .true.
+ !use_excess_ice_streams = .true.
+ hist_fincl2 = 'EXCESS_ICE' 'TOTEXICE_VOL' 'SUBSIDENCE' 'SOILLIQ' 'SOILICE' 'TSOI' 'TBOT' 'Tair_from_atm'
+ hist_mfilt        = 1,1
+ hist_nhtfrq       = 0,0
+ hist_dov2xy = .true. .true.
+
