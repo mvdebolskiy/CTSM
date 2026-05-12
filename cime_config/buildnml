@@ -50,10 +50,10 @@ def buildnml(case, caseroot, compname):
     clm_force_coldstart = case.get_value("CLM_FORCE_COLDSTART")
     lnd_tuning_mode = case.get_value("LND_TUNING_MODE")
     clm_accelerated_spinup = case.get_value("CLM_ACCELERATED_SPINUP")
-    comp_interface = case.get_value("COMP_INTERFACE")
     lilac_mode = case.get_value("LILAC_MODE")
     yr_start = case.get_value("DATM_YR_START")
     yr_end = case.get_value("DATM_YR_END")
+    compset = case.get_value("COMPSET")
 
     # For LILAC
     if yr_start == None or lilac_mode == "on":
@@ -78,6 +78,7 @@ def buildnml(case, caseroot, compname):
     glc_use_antarctica = case.get_value("GLC_USE_ANTARCTICA")
     mask = case.get_value("MASK_GRID")
     driver = case.get_value("COMP_INTERFACE").lower()
+    esm = case.get_value("CLM_ESM_DEFAULTS").lower()
 
     # Create init_generated_files directory if not there
     newdir = os.path.join(rundir, "init_generated_files")
@@ -87,6 +88,29 @@ def buildnml(case, caseroot, compname):
     # -----------------------------------------------------
     # Error checking
     # -----------------------------------------------------
+    
+    # check compset validity:
+    match = re.search(r'(?<=_CLM).*', compset)
+    if match:
+        comp_conf = match.group(1)
+        comp_conf = comp_conf.split("_")
+        comp_conf = comp_conf[0]
+    else:
+        logger.error("ERROR: CLM is not part of the compset")
+
+    if "%NOANTHRO" in comp_conf:
+        if not  (re.search(r'.*(_CLM[5-6]0%SP[%_]).*', compset) or (re.search(r'.*(_CLM[5-6]0%BGC[%_]).*', compset))):
+            logger.error("ERROR: %NOANTHRO is only appicable to CLMXX%SP or CLMXX%BGC (no crop)")
+    if ("%CMIP6DECK" in comp_conf) or ("%CMIP6WACCMDECK" in comp_conf) and ("BGC-CROP" not in comp_conf):
+        logger.error("ERROR: %CMIP6DECK and %CMIP6WACCMDECK modifiers are only applicable to BGC-CROP")
+    if ("%SP" in comp_conf or "%BGC" in comp_conf) and ("FATES" in comp_conf):
+        logger.error(f"ERROR: FATES can not be specified when %SP or %BGC are also specified in {compset}")
+    if ("NWP" in comp_conf) and ("FATES" in comp_conf):
+        logger.error(f"ERROR: FATES can not be specified together with NWP in {compset}")
+
+
+
+
     if clm_bldnml_opts.find("-namelist") >= 0:
         expect(
             False,
@@ -389,7 +413,7 @@ def buildnml(case, caseroot, compname):
             '%s -cimeroot %s -landroot %s -infile %s -csmdata %s -inputdata %s %s -namelist "&clm_inparm  start_ymd=%s %s/ " '
             "%s %s -res %s %s -clm_start_type %s -envxml_dir %s "
             "-configuration %s -structure %s "
-            "%s -glc_nec %s %s -co2_ppmv %s -co2_type %s -config %s -driver %s "
+            "%s -glc_nec %s %s -co2_ppmv %s -co2_type %s -config %s -driver %s -esm %s"
             "%s %s %s %s"
             % (
                 cmd,
@@ -416,6 +440,7 @@ def buildnml(case, caseroot, compname):
                 clm_co2_type,
                 config_cache_file,
                 driver,
+                esm,
                 clm_bldnml_opts,
                 spinup,
                 tuning,

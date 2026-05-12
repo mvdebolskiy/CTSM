@@ -230,6 +230,7 @@ OPTIONS
      -version                 Echo the SVN tag name used to check out this CLM distribution.
      -vichydro                Toggle to turn on VIC hydrologic parameterizations (default is off)
                               This turns on the namelist variable: use_vichydro
+     -esm <name>              Which ESM to use default namelist values for
 
 
 Note: The precedence for setting the values of namelist variables is (highest to lowest):
@@ -297,6 +298,7 @@ sub process_commandline {
                dynamic_vegetation    => 0,
                envxml_dir            => ".",
                vichydro              => 0,
+               esm                   => "default",
                maxpft                => "default",
              );
 
@@ -346,6 +348,7 @@ sub process_commandline {
              "crop!"                     => \$opts{'crop'},
              "dynamic_vegetation"        => \$opts{'dynamic_vegetation'},
              "vichydro"                  => \$opts{'vichydro'},
+             "esm=s"                     => \$opts{'esm_defaults'},
              "maxpft=i"                  => \$opts{'maxpft'},
              "v|verbose"                 => \$opts{'verbose'},
              "version"                   => \$opts{'version'},
