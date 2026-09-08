@@ -50,6 +50,6 @@ hist_fincl4 = 'FSA','FIRA','QVEGE','QVEGT','QRUNOFF','SOILLIQ','SOILICE','SOILWA
 hist_mfilt(5) = 584
 hist_nhtfrq(5) = -3
 hist_avgflag_pertape(5) = "I"
-hist_fincl5 = 'mrsol_tpt-d10cm-hxy-lnd', 'tslsi_tpt-u-hxy-lsi'
+hist_fincl5 = 'TSA', 'SOILWATER_10CM'
 
 
